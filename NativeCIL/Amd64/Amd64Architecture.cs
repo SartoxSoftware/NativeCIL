@@ -131,7 +131,7 @@ public class Amd64Architecture : Architecture
                 Builder.AppendLine(GetSafeName(field.Name) + ":");
                 Builder.AppendLine("dq " + (field.HasConstant ? Convert.ToUInt64(field.Constant.Value) : 0));
             }
-            
+
             // Compile methods
             foreach (var method in type.Methods)
             {
