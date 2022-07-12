@@ -141,6 +141,10 @@ public class Amd64Architecture : Architecture
 
             Builder.AppendLine(name + ":");
 
+            if (method.Body.InitLocals)
+                foreach (var local in method.Body.Variables)
+                    PushVariable(local.Index, 0);
+
             foreach (var inst in method.Body.Instructions)
             {
                 foreach (var branch in branches)
@@ -221,7 +225,7 @@ public class Amd64Architecture : Architecture
 
                     case Code.Ldloc_S:
                     case Code.Ldloc:
-                        PopVariable(Convert.ToInt32(inst.Operand), "rax");
+                        PopVariable(inst.Operand is Local o ? o.Index : Convert.ToInt32(inst.Operand), "rax");
                         Push("rax");
                         break;
 
@@ -245,7 +249,7 @@ public class Amd64Architecture : Architecture
                     case Code.Stloc_S:
                     case Code.Stloc:
                         Pop("rax");
-                        PushVariable(Convert.ToInt32(inst.Operand), "rax");
+                        PushVariable(inst.Operand is Local u ? u.Index : Convert.ToInt32(inst.Operand), "rax");
                         break;
 
                     case Code.Dup:
@@ -277,6 +281,14 @@ public class Amd64Architecture : Architecture
                         Pop("rbx");
                         Builder.AppendLine("cmp rbx,rax");
                         Builder.AppendLine("setl bl");
+                        Push("rbx");
+                        break;
+
+                    case Code.Ceq:
+                        Pop("rax");
+                        Pop("rbx");
+                        Builder.AppendLine("cmp rbx,rax");
+                        Builder.AppendLine("sete bl");
                         Push("rbx");
                         break;
                 }
