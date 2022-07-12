@@ -35,8 +35,8 @@ public abstract class Architecture
     public abstract void Assemble();
     public abstract void Link();
 
-    public abstract void PushVariable(int index, object obj);
-    public abstract void PopVariable(int index, object obj);
+    public abstract void PushIndex(int index, object obj, string reg);
+    public abstract void PopIndex(int index, object obj, string reg);
 
     public abstract void Peek(object obj);
     public abstract void Push(object obj);

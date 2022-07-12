@@ -209,49 +209,49 @@ public class Amd64Architecture : Architecture
                         break;
 
                     case Code.Ldloc_0:
-                        PopVariable(0, "rax");
+                        PopIndex(0, "rax", "r8");
                         Push("rax");
                         break;
                     case Code.Ldloc_1:
-                        PopVariable(1, "rax");
+                        PopIndex(1, "rax", "r8");
                         Push("rax");
                         break;
                     case Code.Ldloc_2:
-                        PopVariable(2, "rax");
+                        PopIndex(2, "rax", "r8");
                         Push("rax");
                         break;
                     case Code.Ldloc_3:
-                        PopVariable(3, "rax");
+                        PopIndex(3, "rax", "r8");
                         Push("rax");
                         break;
 
                     case Code.Ldloc_S:
                     case Code.Ldloc:
-                        PopVariable(inst.Operand is Local o ? o.Index : Convert.ToInt32(inst.Operand), "rax");
+                        PopIndex(inst.Operand is Local o ? o.Index : Convert.ToInt32(inst.Operand), "rax", "r8");
                         Push("rax");
                         break;
 
                     case Code.Stloc_0:
                         Pop("rax");
-                        PushVariable(0, "rax");
+                        PushIndex(0, "rax", "r8");
                         break;
                     case Code.Stloc_1:
                         Pop("rax");
-                        PushVariable(1, "rax");
+                        PushIndex(1, "rax", "r8");
                         break;
                     case Code.Stloc_2:
                         Pop("rax");
-                        PushVariable(2, "rax");
+                        PushIndex(2, "rax", "r8");
                         break;
                     case Code.Stloc_3:
                         Pop("rax");
-                        PushVariable(3, "rax");
+                        PushIndex(3, "rax", "r8");
                         break;
 
                     case Code.Stloc_S:
                     case Code.Stloc:
                         Pop("rax");
-                        PushVariable(inst.Operand is Local u ? u.Index : Convert.ToInt32(inst.Operand), "rax");
+                        PushIndex(inst.Operand is Local u ? u.Index : Convert.ToInt32(inst.Operand), "rax", "r8");
                         break;
 
                     case Code.Dup:
@@ -299,34 +299,34 @@ public class Amd64Architecture : Architecture
                         for (var i = meth.Parameters.Count; i > 0; i--)
                         {
                             Pop("rax");
-                            PushArg(i - 1, "rax");
+                            PushIndex(i - 1, "rax", "r9");
                         }
                         Builder.AppendLine("call " + GetSafeName(meth.FullName));
                         break;
 
                     case Code.Ldarg_S:
                     case Code.Ldarg:
-                        PopArg(Convert.ToInt32(inst.Operand), "rax");
+                        PopIndex(Convert.ToInt32(inst.Operand), "rax", "r9");
                         Push("rax");
                         break;
 
                     case Code.Ldarg_0:
-                        PopArg(0, "rax");
+                        PopIndex(0, "rax", "r9");
                         Push("rax");
                         break;
                     case Code.Ldarg_1:
-                        PopArg(1, "rax");
+                        PopIndex(1, "rax", "r9");
                         Push("rax");
                         break;
                     case Code.Ldarg_2:
-                        PopArg(2, "rax");
+                        PopIndex(2, "rax", "r9");
                         Push("rax");
                         break;
                     case Code.Ldarg_3:
-                        PopArg(3, "rax");
+                        PopIndex(3, "rax", "r9");
                         Push("rax");
                         break;
-                    
+
                     default:
                         Console.WriteLine("Unimplemented opcode: " + inst.OpCode);
                         break;
@@ -348,14 +348,10 @@ public class Amd64Architecture : Architecture
         Process.Start("objcopy", "-Ibinary -Oelf64-x86-64 -Bi386 Output/kernel.bin Output/kernel.o");
         Process.Start("ld.lld", "-melf_x86_64 -Tlinker.ld -oOutput/kernel.elf Output/kernel.o").WaitForExit();
     }
-    
-    public void PushArg(int index, object obj) => Builder.AppendLine($"mov qword [r9+{index * PointerSize}],{obj}");
 
-    public void PopArg(int index, object obj) => Builder.AppendLine($"mov {obj},qword [r9+{index * PointerSize}]");
+    public override void PushIndex(int index, object obj, string reg) => Builder.AppendLine($"mov qword [{reg}+{index * PointerSize}],{obj}");
 
-    public override void PushVariable(int index, object obj) => Builder.AppendLine($"mov qword [r8+{index * PointerSize}],{obj}");
-
-    public override void PopVariable(int index, object obj) => Builder.AppendLine($"mov {obj},qword [r8+{index * PointerSize}]");
+    public override void PopIndex(int index, object obj, string reg) => Builder.AppendLine($"mov {obj},qword [{reg}+{index * PointerSize}]");
 
     public override void Peek(object obj) => Builder.AppendLine($"mov {obj},qword [rbp+{StackIndex}]");
 
