@@ -5,21 +5,20 @@ class Program
     public static void Main(string[] _)
     {
         Setup.Initialize();
-        Cycle('A');
+        Cycle('A', 0xFF, 0);
         for (;;);
     }
 
-    private static void Cycle(char c)
+    private static void Cycle(char c, byte end, int index)
     {
         unsafe
         {
-            // Cycle through all foreground colors, starting from the last one
+            // Cycle through all characters and colors
             var start = (byte)c;
-            var index = 0;
-            for (var i = 0; i < 16; i++)
+            for (var i = index; i < end; i++)
             {
-                *(byte*)(Setup.VgaAddress + index++) = start++;
-                *(byte*)(Setup.VgaAddress + index++) = Setup.DefaultColor++;
+                *(byte*)Setup.VgaAddress++ = start++;
+                *(byte*)Setup.VgaAddress++ = Setup.DefaultColor++;
             }
         }
     }

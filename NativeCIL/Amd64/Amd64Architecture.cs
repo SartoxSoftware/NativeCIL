@@ -114,7 +114,7 @@ public class Amd64Architecture : Architecture
         Builder.AppendLine("mov gs,ax");
         Builder.AppendLine("mov ss,ax");
         Builder.AppendLine("pop rsi");
-        Builder.AppendLine("pop rdi");
+        Builder.AppendLine("pop rdx");
         Builder.AppendLine("mov rbp,KERNEL_STACK-1024");
     }
 
@@ -306,31 +306,31 @@ public class Amd64Architecture : Architecture
                             for (var i = meth.Parameters.Count; i > 0; i--)
                             {
                                 Pop("rax");
-                                PushIndex(i - 1, "rax", "r9");
+                                PushIndex(i - 1, "rax", "rdx");
                             }
                             Builder.AppendLine("call " + GetSafeName(meth.FullName));
                             break;
 
                         case Code.Ldarg_S:
                         case Code.Ldarg:
-                            PopIndex(Convert.ToInt32(inst.Operand), "rax", "r9");
+                            PopIndex(Convert.ToInt32(inst.Operand), "rax", "rdx");
                             Push("rax");
                             break;
 
                         case Code.Ldarg_0:
-                            PopIndex(0, "rax", "r9");
+                            PopIndex(0, "rax", "rdx");
                             Push("rax");
                             break;
                         case Code.Ldarg_1:
-                            PopIndex(1, "rax", "r9");
+                            PopIndex(1, "rax", "rdx");
                             Push("rax");
                             break;
                         case Code.Ldarg_2:
-                            PopIndex(2, "rax", "r9");
+                            PopIndex(2, "rax", "rdx");
                             Push("rax");
                             break;
                         case Code.Ldarg_3:
-                            PopIndex(3, "rax", "r9");
+                            PopIndex(3, "rax", "rdx");
                             Push("rax");
                             break;
 
