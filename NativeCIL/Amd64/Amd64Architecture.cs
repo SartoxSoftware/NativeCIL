@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using dnlib.DotNet;
 using dnlib.DotNet.Emit;
 
 namespace NativeCIL.Amd64;
@@ -137,9 +138,7 @@ public class Amd64Architecture : Architecture
                 continue;
 
             var branches = GetAllBranches(method).ToList();
-            var name = GetSafeName(method.FullName);
-
-            Builder.AppendLine(name + ":");
+            Builder.AppendLine(GetSafeName(method.FullName) + ":");
 
             if (method.Body.InitLocals)
                 foreach (var local in method.Body.Variables)
@@ -157,6 +156,7 @@ public class Amd64Architecture : Architecture
                 switch (inst.OpCode.Code)
                 {
                     case Code.Nop: break;
+                    case Code.Ret: Builder.AppendLine("ret"); break;
 
                     case Code.Ldc_I4_0: Push(0); break;
                     case Code.Ldc_I4_1: Push(1); break;
@@ -291,6 +291,10 @@ public class Amd64Architecture : Architecture
                         Builder.AppendLine("sete bl");
                         Push("rbx");
                         break;
+                    
+                    case Code.Call:
+                        Builder.AppendLine("call " + GetSafeName(((MethodDef)inst.Operand).FullName));
+                        break;
                 }
             }
         }
@@ -298,8 +302,6 @@ public class Amd64Architecture : Architecture
 
     public override void Assemble()
     {
-        Builder.AppendLine("jmp $");
-        
         Directory.CreateDirectory("Output");
         File.WriteAllText("Output/kernel.asm", Builder.ToString());
         Process.Start("nasm", "-fbin Output/kernel.asm -o Output/kernel.bin").WaitForExit();
@@ -313,9 +315,9 @@ public class Amd64Architecture : Architecture
         //Process.Start("ld.lld", "-Ttext=0x100000 -melf_x86_64 -o Output/kernel.elf Output/kernel.bin").WaitForExit();
     }
 
-    public override void PushVariable(int index, object obj) => Builder.AppendLine($"mov qword [rsp+{index * PointerSize}],{obj}");
+    public override void PushVariable(int index, object obj) => Builder.AppendLine($"mov qword [r8+{index * PointerSize}],{obj}");
 
-    public override void PopVariable(int index, object obj) => Builder.AppendLine($"mov {obj},qword [rsp+{index * 8}]");
+    public override void PopVariable(int index, object obj) => Builder.AppendLine($"mov {obj},qword [r8+{index * 8}]");
 
     public override void Peek(object obj) => Builder.AppendLine($"mov {obj},qword [rbp+{StackIndex}]");
 
