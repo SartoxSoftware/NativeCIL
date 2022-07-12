@@ -290,14 +290,15 @@ public class Amd64Architecture : Architecture
         
         Directory.CreateDirectory("Output");
         File.WriteAllText("Output/kernel.asm", Builder.ToString());
-        Process.Start("nasm", "-felf64 Output/kernel.asm -o Output/kernel.bin").WaitForExit();
+        Process.Start("nasm", "-fbin Output/kernel.asm -o Output/kernel.bin").WaitForExit();
     }
 
     public override void Link()
     {
-        /*Process.Start("objcopy", "-I binary -O elf64-x86-64 --binary-architecture i386 Output/kernel.bin Output/kernel.o");
-        Process.Start("ld.lld", "-melf_x86_64 -T linker.ld -o Output/kernel.elf Output/kernel.o").WaitForExit();*/
-        Process.Start("ld.lld", "-Ttext=0x100000 -melf_x86_64 -o Output/kernel.elf Output/kernel.bin").WaitForExit();
+        // TODO: Replace objcopy and lld with a C# linker
+        Process.Start("objcopy", "-Ibinary -Oelf64-x86-64 -Bi386 Output/kernel.bin Output/kernel.o");
+        Process.Start("ld.lld", "-melf_x86_64 -Tlinker.ld -oOutput/kernel.elf Output/kernel.o").WaitForExit();
+        //Process.Start("ld.lld", "-Ttext=0x100000 -melf_x86_64 -o Output/kernel.elf Output/kernel.bin").WaitForExit();
     }
 
     public override void PushVariable(int index, object obj) => Builder.AppendLine($"mov qword [rsp+{index * PointerSize}],{obj}");
