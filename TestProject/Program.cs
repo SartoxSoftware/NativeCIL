@@ -1,20 +1,12 @@
 ﻿unsafe
 {
-    byte color = 0;
-    for (var i = 1; i < 15; i++)
-        color++;
-
-    if (color != 15)
-        color = 15;
-
-    if (color == 15)
+    // Cycle through all foreground colors
+    var start = (byte)'A';
+    var index = 0;
+    var address = 0xB8000;
+    for (byte i = 1; i < 15; i++)
     {
-        *(byte*)0xB8004 = (byte)'a';
-        *(byte*)0xB8005 = 12;
+        *(byte*)(address + index++) = start++;
+        *(byte*)(address + index++) = i;
     }
-    
-    *(byte*)0xB8000 = (byte)'H';
-    *(byte*)0xB8001 = color--;
-    *(byte*)0xB8002 = (byte)'i';
-    *(byte*)0xB8003 = ++color;
 }
