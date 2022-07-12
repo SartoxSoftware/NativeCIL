@@ -140,9 +140,10 @@ public class Amd64Architecture : Architecture
             var branches = GetAllBranches(method).ToList();
             Builder.AppendLine(GetSafeName(method.FullName) + ":");
 
-            if (method.Body.InitLocals)
+            // TODO: Initialize locals (variables), so that they don't interfere with Ldarg/Call
+            /*if (method.Body.InitLocals)
                 foreach (var local in method.Body.Variables)
-                    PushVariable(local.Index, 0);
+                    PushVariable(local.Index, 0);*/
 
             foreach (var inst in method.Body.Instructions)
             {
@@ -301,7 +302,7 @@ public class Amd64Architecture : Architecture
                         }
                         Builder.AppendLine("call " + GetSafeName(meth.FullName));
                         break;
-                    
+
                     case Code.Ldarg_S:
                     case Code.Ldarg:
                         PopVariable(Convert.ToInt32(inst.Operand), "rax");
