@@ -135,12 +135,21 @@ public class Amd64Architecture : Architecture
         {
             if (method.IsConstructor || method.IsStaticConstructor)
                 continue;
-            
+
+            var branches = GetAllBranches(method).ToList();
             var name = GetSafeName(method.FullName);
+
             Builder.AppendLine(name + ":");
 
             foreach (var inst in method.Body.Instructions)
             {
+                foreach (var branch in branches)
+                    if (((Instruction)branch.Operand).Offset == inst.Offset)
+                    {
+                        Builder.AppendLine(BrLabelName(inst, method, true) + ":");
+                        break;
+                    }
+
                 switch (inst.OpCode.Code)
                 {
                     case Code.Nop: break;
@@ -244,10 +253,32 @@ public class Amd64Architecture : Architecture
                         Push("rax");
                         break;
 
-                    /*case Code.Br_S:
+                    case Code.Br_S:
                     case Code.Br:
-                        Builder.AppendLine("jmp ")
-                        break;*/
+                        Builder.AppendLine("jmp " + BrLabelName(inst, method));
+                        break;
+
+                    case Code.Brtrue_S:
+                    case Code.Brtrue:
+                        Pop("rax");
+                        Builder.AppendLine("cmp rax,0");
+                        Builder.AppendLine("jnz " + BrLabelName(inst, method));
+                        break;
+
+                    case Code.Brfalse_S:
+                    case Code.Brfalse:
+                        Pop("rax");
+                        Builder.AppendLine("cmp rax,0");
+                        Builder.AppendLine("jz " + BrLabelName(inst, method));
+                        break;
+
+                    case Code.Clt:
+                        Pop("rax");
+                        Pop("rbx");
+                        Builder.AppendLine("cmp rbx,rax");
+                        Builder.AppendLine("setl bl");
+                        Push("rbx");
+                        break;
                 }
             }
         }

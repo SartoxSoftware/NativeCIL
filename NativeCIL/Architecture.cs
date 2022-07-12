@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using dnlib.DotNet;
+using dnlib.DotNet.Emit;
 
 namespace NativeCIL;
 
@@ -14,15 +15,19 @@ public abstract class Architecture
 
     public abstract int PointerSize { get; }
 
-    public Architecture(string path)
+    protected Architecture(string path)
     {
         Module = ModuleDefMD.Load(path);
         Builder = new();
     }
 
-    public string GetSafeName(string name)
+    protected static string GetSafeName(string name) => Regex.Replace(name, @"[^0-9a-zA-Z]+", "_");
+    protected static string BrLabelName(Instruction ins, MethodDef def, bool create = false) => $"LB_{def.GetHashCode():X4}{(create ? ins.Offset : ((Instruction)ins.Operand).Offset):X4}";
+    protected static IEnumerable<Instruction> GetAllBranches(MethodDef method)
     {
-        return Regex.Replace(name, @"[^0-9a-zA-Z]+", "_");
+        foreach (var br in method.Body.Instructions)
+            if (br.OpCode.OperandType is OperandType.InlineBrTarget or OperandType.ShortInlineBrTarget)
+                yield return br;
     }
 
     public abstract void Initialize();
