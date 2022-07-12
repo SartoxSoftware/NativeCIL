@@ -291,9 +291,38 @@ public class Amd64Architecture : Architecture
                         Builder.AppendLine("sete bl");
                         Push("rbx");
                         break;
-                    
+
                     case Code.Call:
-                        Builder.AppendLine("call " + GetSafeName(((MethodDef)inst.Operand).FullName));
+                        var meth = (MethodDef)inst.Operand;
+                        for (var i = 0; i < meth.Parameters.Count; i++)
+                        {
+                            Pop("rax");
+                            PushVariable(i, "rax");
+                        }
+                        Builder.AppendLine("call " + GetSafeName(meth.FullName));
+                        break;
+                    
+                    case Code.Ldarg_S:
+                    case Code.Ldarg:
+                        PopVariable(Convert.ToInt32(inst.Operand), "rax");
+                        Push("rax");
+                        break;
+
+                    case Code.Ldarg_0:
+                        PopVariable(0, "rax");
+                        Push("rax");
+                        break;
+                    case Code.Ldarg_1:
+                        PopVariable(1, "rax");
+                        Push("rax");
+                        break;
+                    case Code.Ldarg_2:
+                        PopVariable(2, "rax");
+                        Push("rax");
+                        break;
+                    case Code.Ldarg_3:
+                        PopVariable(3, "rax");
+                        Push("rax");
                         break;
                 }
             }
@@ -312,12 +341,11 @@ public class Amd64Architecture : Architecture
         // TODO: Replace objcopy and lld with a C# linker
         Process.Start("objcopy", "-Ibinary -Oelf64-x86-64 -Bi386 Output/kernel.bin Output/kernel.o");
         Process.Start("ld.lld", "-melf_x86_64 -Tlinker.ld -oOutput/kernel.elf Output/kernel.o").WaitForExit();
-        //Process.Start("ld.lld", "-Ttext=0x100000 -melf_x86_64 -o Output/kernel.elf Output/kernel.bin").WaitForExit();
     }
 
     public override void PushVariable(int index, object obj) => Builder.AppendLine($"mov qword [r8+{index * PointerSize}],{obj}");
 
-    public override void PopVariable(int index, object obj) => Builder.AppendLine($"mov {obj},qword [r8+{index * 8}]");
+    public override void PopVariable(int index, object obj) => Builder.AppendLine($"mov {obj},qword [r8+{index * PointerSize}]");
 
     public override void Peek(object obj) => Builder.AppendLine($"mov {obj},qword [rbp+{StackIndex}]");
 
