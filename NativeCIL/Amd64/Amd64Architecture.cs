@@ -243,6 +243,11 @@ public class Amd64Architecture : Architecture
                         Peek("rax");
                         Push("rax");
                         break;
+
+                    /*case Code.Br_S:
+                    case Code.Br:
+                        Builder.AppendLine("jmp ")
+                        break;*/
                 }
             }
         }
@@ -259,6 +264,8 @@ public class Amd64Architecture : Architecture
 
     public override void Link()
     {
+        /*Process.Start("objcopy", "-I binary -O elf64-x86-64 --binary-architecture i386 Output/kernel.bin Output/kernel.o");
+        Process.Start("ld.lld", "-melf_x86_64 -T linker.ld -o Output/kernel.elf Output/kernel.o").WaitForExit();*/
         Process.Start("ld.lld", "-Ttext=0x100000 -melf_x86_64 -o Output/kernel.elf Output/kernel.bin").WaitForExit();
     }
 
