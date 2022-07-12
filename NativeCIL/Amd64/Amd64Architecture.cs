@@ -10,36 +10,24 @@ public class Amd64Architecture : Architecture
 
     public override int PointerSize => 8;
 
+    // Thanks https://os.phil-opp.com/multiboot-kernel/ :)
     public override void Initialize()
     {
         Builder.AppendLine("[bits 32]");
         Builder.AppendLine("[global _start]");
 
-        Builder.AppendLine("MULTIBOOT_ALIGN equ 1<<0");
-        Builder.AppendLine("MULTIBOOT_MEMINFO equ 1<<1");
-        Builder.AppendLine("MULTIBOOT_VBE_MODE equ 1<<2");
-        Builder.AppendLine("MULTIBOOT_HEADER_MAGIC equ 0x1BADB002");
-        Builder.AppendLine("MULTIBOOT_HEADER_FLAGS equ MULTIBOOT_ALIGN|MULTIBOOT_MEMINFO");
-        Builder.AppendLine("CHECKSUM equ -(MULTIBOOT_HEADER_MAGIC+MULTIBOOT_HEADER_FLAGS)");
         Builder.AppendLine("KERNEL_STACK equ 0x00200000");
 
+        Builder.AppendLine("dd 0xE85250D6"); // Magic
+        Builder.AppendLine("dd 0"); // Architecture
+        Builder.AppendLine("dd 16"); // Header length
+        Builder.AppendLine("dd -(0xE85250D6+16)"); // Checksum
+        // Required tag
+        Builder.AppendLine("dw 0");
+        Builder.AppendLine("dw 0");
+        Builder.AppendLine("dd 8");
+
         Builder.AppendLine("_start:");
-        Builder.AppendLine("xor eax,eax");
-        Builder.AppendLine("xor ebx,ebx");
-        Builder.AppendLine("jmp multiboot_entry");
-        Builder.AppendLine("align 4");
-
-        Builder.AppendLine("multiboot_header:");
-        Builder.AppendLine("dd MULTIBOOT_HEADER_MAGIC");
-        Builder.AppendLine("dd MULTIBOOT_HEADER_FLAGS");
-        Builder.AppendLine("dd CHECKSUM");
-        Builder.AppendLine("dd multiboot_header");
-        Builder.AppendLine("dd _start");
-        Builder.AppendLine("dd 00");
-        Builder.AppendLine("dd 00");
-        Builder.AppendLine("dd multiboot_entry");
-
-        Builder.AppendLine("multiboot_entry:");
         Builder.AppendLine("mov esp,KERNEL_STACK");
         Builder.AppendLine("push 0");
         Builder.AppendLine("popf");

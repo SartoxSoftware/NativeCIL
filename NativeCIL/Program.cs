@@ -23,7 +23,7 @@ var iso = new CDBuilder
     UpdateIsolinuxBootTable = true
 };
 iso.AddFile("limine.sys", sys);
-iso.AddFile("limine.cfg", Encoding.ASCII.GetBytes($"TIMEOUT=0\n:{arch.AssemblyName}\nPROTOCOL=multiboot1\nKERNEL_PATH=boot:///kernel.elf"));
+iso.AddFile("limine.cfg", Encoding.ASCII.GetBytes($"TIMEOUT=0\n:{arch.AssemblyName}\nPROTOCOL=multiboot2\nKERNEL_PATH=boot:///kernel.elf"));
 iso.AddFile("kernel.elf", kernel);
 iso.SetBootImage(cd, BootDeviceEmulation.NoEmulation, 0);
 iso.Build("Output/output.iso");
