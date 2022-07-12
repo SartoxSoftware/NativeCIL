@@ -154,6 +154,7 @@ public class Amd64Architecture : Architecture
                         break;
                     }
 
+                Builder.AppendLine(";" + inst.OpCode);
                 switch (inst.OpCode.Code)
                 {
                     case Code.Nop: break;
@@ -295,35 +296,39 @@ public class Amd64Architecture : Architecture
 
                     case Code.Call:
                         var meth = (MethodDef)inst.Operand;
-                        for (var i = 0; i < meth.Parameters.Count; i++)
+                        for (var i = meth.Parameters.Count; i > 0; i--)
                         {
                             Pop("rax");
-                            PushVariable(i, "rax");
+                            PushArg(i - 1, "rax");
                         }
                         Builder.AppendLine("call " + GetSafeName(meth.FullName));
                         break;
 
                     case Code.Ldarg_S:
                     case Code.Ldarg:
-                        PopVariable(Convert.ToInt32(inst.Operand), "rax");
+                        PopArg(Convert.ToInt32(inst.Operand), "rax");
                         Push("rax");
                         break;
 
                     case Code.Ldarg_0:
-                        PopVariable(0, "rax");
+                        PopArg(0, "rax");
                         Push("rax");
                         break;
                     case Code.Ldarg_1:
-                        PopVariable(1, "rax");
+                        PopArg(1, "rax");
                         Push("rax");
                         break;
                     case Code.Ldarg_2:
-                        PopVariable(2, "rax");
+                        PopArg(2, "rax");
                         Push("rax");
                         break;
                     case Code.Ldarg_3:
-                        PopVariable(3, "rax");
+                        PopArg(3, "rax");
                         Push("rax");
+                        break;
+                    
+                    default:
+                        Console.WriteLine("Unimplemented opcode: " + inst.OpCode);
                         break;
                 }
             }
@@ -343,6 +348,10 @@ public class Amd64Architecture : Architecture
         Process.Start("objcopy", "-Ibinary -Oelf64-x86-64 -Bi386 Output/kernel.bin Output/kernel.o");
         Process.Start("ld.lld", "-melf_x86_64 -Tlinker.ld -oOutput/kernel.elf Output/kernel.o").WaitForExit();
     }
+    
+    public void PushArg(int index, object obj) => Builder.AppendLine($"mov qword [r9+{index * PointerSize}],{obj}");
+
+    public void PopArg(int index, object obj) => Builder.AppendLine($"mov {obj},qword [r9+{index * PointerSize}]");
 
     public override void PushVariable(int index, object obj) => Builder.AppendLine($"mov qword [r8+{index * PointerSize}],{obj}");
 
