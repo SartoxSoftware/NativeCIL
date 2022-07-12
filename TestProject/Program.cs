@@ -1,18 +1,28 @@
-﻿Cycle('A');
-for (;;);
+﻿namespace TestProject;
 
-void Cycle(char c)
+class Program
 {
-    unsafe
+    public static byte Color;
+    
+    public static void Main(string[] args)
     {
-        // Cycle through all foreground colors
-        var start = (byte)c;
-        var index = 0;
-        var address = 0xB8000;
-        for (byte i = 1; i < 15; i++)
+        Cycle('A');
+        for (;;);
+
+        void Cycle(char c)
         {
-            *(byte*)(address + index++) = start++;
-            *(byte*)(address + index++) = i;
+            unsafe
+            {
+                // Cycle through all foreground colors, starting from the last one
+                var start = (byte)c;
+                var index = 0;
+                var address = 0xB8000;
+                for (var i = 0; i < 16; i++)
+                {
+                    *(byte*)(address + index++) = start++;
+                    *(byte*)(address + index++) = Color++;
+                }
+            }
         }
     }
 }

@@ -120,6 +120,15 @@ public class Amd64Architecture : Architecture
 
     public override void Compile()
     {
+        foreach (var field in Module.EntryPoint.DeclaringType.Fields)
+        {
+            if (!field.IsStatic)
+                continue;
+
+            Builder.AppendLine(GetSafeName(field.Name) + ":");
+            Builder.AppendLine("dq " + (field.HasConstant ? field.Constant.Value : 0));
+        }
+        
         foreach (var method in Module.EntryPoint.DeclaringType.Methods)
         {
             if (method.IsConstructor || method.IsStaticConstructor)
@@ -315,6 +324,16 @@ public class Amd64Architecture : Architecture
                         Push("rax");
                         break;
 
+                    case Code.Ldsfld:
+                        PopString(GetSafeName(((FieldDef)inst.Operand).Name), "rax", "r10");
+                        Push("rax");
+                        break;
+
+                    case Code.Stsfld:
+                        Pop("rax");
+                        PushString(GetSafeName(((FieldDef)inst.Operand).Name), "rax", "r10");
+                        break;
+
                     default:
                         Console.WriteLine("Unimplemented opcode: " + inst.OpCode);
                         break;
@@ -340,6 +359,10 @@ public class Amd64Architecture : Architecture
     public override void PushIndex(int index, object obj, string reg) => Builder.AppendLine($"mov qword [{reg}+{index * PointerSize}],{obj}");
 
     public override void PopIndex(int index, object obj, string reg) => Builder.AppendLine($"mov {obj},qword [{reg}+{index * PointerSize}]");
+
+    public override void PushString(string str, object obj, string reg) => Builder.AppendLine($"mov [{str}],{obj}");
+
+    public override void PopString(string str, object obj, string reg) => Builder.AppendLine($"mov {obj},[{str}]");
 
     public override void Peek(object obj) => Builder.AppendLine($"mov {obj},qword [rbp+{StackIndex}]");
 
