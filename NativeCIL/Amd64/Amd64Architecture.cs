@@ -120,223 +120,234 @@ public class Amd64Architecture : Architecture
 
     public override void Compile()
     {
-        foreach (var field in Module.EntryPoint.DeclaringType.Fields)
+        foreach (var type in Module.Types)
         {
-            if (!field.IsStatic)
-                continue;
-
-            Builder.AppendLine(GetSafeName(field.Name) + ":");
-            Builder.AppendLine("dq " + (field.HasConstant ? field.Constant.Value : 0));
-        }
-        
-        foreach (var method in Module.EntryPoint.DeclaringType.Methods)
-        {
-            if (method.IsConstructor || method.IsStaticConstructor)
-                continue;
-
-            var branches = GetAllBranches(method).ToList();
-            Builder.AppendLine(GetSafeName(method.FullName) + ":");
-
-            // TODO: Initialize locals (variables), so that they don't interfere with Ldarg/Call
-            /*if (method.Body.InitLocals)
-                foreach (var local in method.Body.Variables)
-                    PushVariable(local.Index, 0);*/
-
-            foreach (var inst in method.Body.Instructions)
+            // Initialize static fields
+            foreach (var field in type.Fields)
             {
-                foreach (var branch in branches)
-                    if (((Instruction)branch.Operand).Offset == inst.Offset)
-                    {
-                        Builder.AppendLine(BrLabelName(inst, method, true) + ":");
-                        break;
-                    }
+                if (!field.IsStatic)
+                    continue;
 
-                Builder.AppendLine(";" + inst.OpCode);
-                switch (inst.OpCode.Code)
+                Builder.AppendLine(GetSafeName(field.Name) + ":");
+                Builder.AppendLine("dq " + (field.HasConstant ? Convert.ToUInt64(field.Constant.Value) : 0));
+            }
+            
+            // Compile methods
+            foreach (var method in type.Methods)
+            {
+                if (method.IsConstructor)
+                    continue;
+
+                if (method.IsStaticConstructor)
                 {
-                    case Code.Nop: break;
-                    case Code.Ret: Builder.AppendLine("ret"); break;
+                    Builder.AppendLine("call " + GetSafeName(method.FullName));
+                    continue;
+                }
 
-                    case Code.Ldc_I4_0: Push(0); break;
-                    case Code.Ldc_I4_1: Push(1); break;
-                    case Code.Ldc_I4_2: Push(2); break;
-                    case Code.Ldc_I4_3: Push(3); break;
-                    case Code.Ldc_I4_4: Push(4); break;
-                    case Code.Ldc_I4_5: Push(5); break;
-                    case Code.Ldc_I4_6: Push(6); break;
-                    case Code.Ldc_I4_7: Push(7); break;
-                    case Code.Ldc_I4_8: Push(8); break;
-                    case Code.Ldc_I4_M1: Push(-1); break;
+                var branches = GetAllBranches(method).ToList();
+                Builder.AppendLine(GetSafeName(method.FullName) + ":");
 
-                    case Code.Ldc_I4_S:
-                    case Code.Ldc_I4: Push(inst.Operand); break;
+                // TODO: Initialize locals (variables), so that they don't interfere with Ldarg/Call
+                /*if (method.Body.InitLocals)
+                    foreach (var local in method.Body.Variables)
+                        PushVariable(local.Index, 0);*/
 
-                    case Code.Conv_I4:
-                    case Code.Conv_I:
-                        Pop("rax");
-                        Builder.AppendLine("and rax,0xFFFFFFFF");
-                        Push("rax");
-                        break;
-
-                    case Code.Conv_U1:
-                    case Code.Conv_I1:
-                        Pop("rax");
-                        Builder.AppendLine("and rax,0xFF");
-                        Push("rax");
-                        break;
-
-                    case Code.Stind_I1:
-                        Pop("rax"); // Value
-                        Pop("rbx"); // Address
-                        Builder.AppendLine("mov [rbx],al");
-                        break;
-
-                    case Code.Add:
-                        Pop("rax");
-                        Pop("rbx");
-                        Builder.AppendLine("add rbx,rax");
-                        Push("rbx");
-                        break;
-
-                    case Code.Sub:
-                        Pop("rax");
-                        Pop("rbx");
-                        Builder.AppendLine("sub rbx,rax");
-                        Push("rbx");
-                        break;
-
-                    case Code.Ldloc_0:
-                        PopIndex(0, "rax", "r8");
-                        Push("rax");
-                        break;
-                    case Code.Ldloc_1:
-                        PopIndex(1, "rax", "r8");
-                        Push("rax");
-                        break;
-                    case Code.Ldloc_2:
-                        PopIndex(2, "rax", "r8");
-                        Push("rax");
-                        break;
-                    case Code.Ldloc_3:
-                        PopIndex(3, "rax", "r8");
-                        Push("rax");
-                        break;
-
-                    case Code.Ldloc_S:
-                    case Code.Ldloc:
-                        PopIndex(inst.Operand is Local o ? o.Index : Convert.ToInt32(inst.Operand), "rax", "r8");
-                        Push("rax");
-                        break;
-
-                    case Code.Stloc_0:
-                        Pop("rax");
-                        PushIndex(0, "rax", "r8");
-                        break;
-                    case Code.Stloc_1:
-                        Pop("rax");
-                        PushIndex(1, "rax", "r8");
-                        break;
-                    case Code.Stloc_2:
-                        Pop("rax");
-                        PushIndex(2, "rax", "r8");
-                        break;
-                    case Code.Stloc_3:
-                        Pop("rax");
-                        PushIndex(3, "rax", "r8");
-                        break;
-
-                    case Code.Stloc_S:
-                    case Code.Stloc:
-                        Pop("rax");
-                        PushIndex(inst.Operand is Local u ? u.Index : Convert.ToInt32(inst.Operand), "rax", "r8");
-                        break;
-
-                    case Code.Dup:
-                        Peek("rax");
-                        Push("rax");
-                        break;
-
-                    case Code.Br_S:
-                    case Code.Br:
-                        Builder.AppendLine("jmp " + BrLabelName(inst, method));
-                        break;
-
-                    case Code.Brtrue_S:
-                    case Code.Brtrue:
-                        Pop("rax");
-                        Builder.AppendLine("cmp rax,0");
-                        Builder.AppendLine("jnz " + BrLabelName(inst, method));
-                        break;
-
-                    case Code.Brfalse_S:
-                    case Code.Brfalse:
-                        Pop("rax");
-                        Builder.AppendLine("cmp rax,0");
-                        Builder.AppendLine("jz " + BrLabelName(inst, method));
-                        break;
-
-                    case Code.Clt:
-                        Pop("rax");
-                        Pop("rbx");
-                        Builder.AppendLine("cmp rbx,rax");
-                        Builder.AppendLine("setl bl");
-                        Push("rbx");
-                        break;
-
-                    case Code.Ceq:
-                        Pop("rax");
-                        Pop("rbx");
-                        Builder.AppendLine("cmp rbx,rax");
-                        Builder.AppendLine("sete bl");
-                        Push("rbx");
-                        break;
-
-                    case Code.Call:
-                        var meth = (MethodDef)inst.Operand;
-                        for (var i = meth.Parameters.Count; i > 0; i--)
+                foreach (var inst in method.Body.Instructions)
+                {
+                    foreach (var branch in branches)
+                        if (((Instruction)branch.Operand).Offset == inst.Offset)
                         {
-                            Pop("rax");
-                            PushIndex(i - 1, "rax", "r9");
+                            Builder.AppendLine(BrLabelName(inst, method, true) + ":");
+                            break;
                         }
-                        Builder.AppendLine("call " + GetSafeName(meth.FullName));
-                        break;
 
-                    case Code.Ldarg_S:
-                    case Code.Ldarg:
-                        PopIndex(Convert.ToInt32(inst.Operand), "rax", "r9");
-                        Push("rax");
-                        break;
+                    Builder.AppendLine(";" + inst.OpCode);
+                    switch (inst.OpCode.Code)
+                    {
+                        case Code.Nop: break;
+                        case Code.Ret: Builder.AppendLine("ret"); break;
 
-                    case Code.Ldarg_0:
-                        PopIndex(0, "rax", "r9");
-                        Push("rax");
-                        break;
-                    case Code.Ldarg_1:
-                        PopIndex(1, "rax", "r9");
-                        Push("rax");
-                        break;
-                    case Code.Ldarg_2:
-                        PopIndex(2, "rax", "r9");
-                        Push("rax");
-                        break;
-                    case Code.Ldarg_3:
-                        PopIndex(3, "rax", "r9");
-                        Push("rax");
-                        break;
+                        case Code.Ldc_I4_0: Push(0); break;
+                        case Code.Ldc_I4_1: Push(1); break;
+                        case Code.Ldc_I4_2: Push(2); break;
+                        case Code.Ldc_I4_3: Push(3); break;
+                        case Code.Ldc_I4_4: Push(4); break;
+                        case Code.Ldc_I4_5: Push(5); break;
+                        case Code.Ldc_I4_6: Push(6); break;
+                        case Code.Ldc_I4_7: Push(7); break;
+                        case Code.Ldc_I4_8: Push(8); break;
+                        case Code.Ldc_I4_M1: Push(-1); break;
 
-                    case Code.Ldsfld:
-                        PopString(GetSafeName(((FieldDef)inst.Operand).Name), "rax", "r10");
-                        Push("rax");
-                        break;
+                        case Code.Ldc_I4_S:
+                        case Code.Ldc_I4: Push(inst.Operand); break;
 
-                    case Code.Stsfld:
-                        Pop("rax");
-                        PushString(GetSafeName(((FieldDef)inst.Operand).Name), "rax", "r10");
-                        break;
+                        case Code.Conv_I4:
+                        case Code.Conv_I:
+                            Pop("rax");
+                            Builder.AppendLine("and rax,0xFFFFFFFF");
+                            Push("rax");
+                            break;
 
-                    default:
-                        Console.WriteLine("Unimplemented opcode: " + inst.OpCode);
-                        break;
+                        case Code.Conv_U1:
+                        case Code.Conv_I1:
+                            Pop("rax");
+                            Builder.AppendLine("and rax,0xFF");
+                            Push("rax");
+                            break;
+
+                        case Code.Stind_I1:
+                            Pop("rax"); // Value
+                            Pop("rbx"); // Address
+                            Builder.AppendLine("mov [rbx],al");
+                            break;
+
+                        case Code.Add:
+                            Pop("rax");
+                            Pop("rbx");
+                            Builder.AppendLine("add rbx,rax");
+                            Push("rbx");
+                            break;
+
+                        case Code.Sub:
+                            Pop("rax");
+                            Pop("rbx");
+                            Builder.AppendLine("sub rbx,rax");
+                            Push("rbx");
+                            break;
+
+                        case Code.Ldloc_0:
+                            PopIndex(0, "rax", "r8");
+                            Push("rax");
+                            break;
+                        case Code.Ldloc_1:
+                            PopIndex(1, "rax", "r8");
+                            Push("rax");
+                            break;
+                        case Code.Ldloc_2:
+                            PopIndex(2, "rax", "r8");
+                            Push("rax");
+                            break;
+                        case Code.Ldloc_3:
+                            PopIndex(3, "rax", "r8");
+                            Push("rax");
+                            break;
+
+                        case Code.Ldloc_S:
+                        case Code.Ldloc:
+                            PopIndex(inst.Operand is Local o ? o.Index : Convert.ToInt32(inst.Operand), "rax", "r8");
+                            Push("rax");
+                            break;
+
+                        case Code.Stloc_0:
+                            Pop("rax");
+                            PushIndex(0, "rax", "r8");
+                            break;
+                        case Code.Stloc_1:
+                            Pop("rax");
+                            PushIndex(1, "rax", "r8");
+                            break;
+                        case Code.Stloc_2:
+                            Pop("rax");
+                            PushIndex(2, "rax", "r8");
+                            break;
+                        case Code.Stloc_3:
+                            Pop("rax");
+                            PushIndex(3, "rax", "r8");
+                            break;
+
+                        case Code.Stloc_S:
+                        case Code.Stloc:
+                            Pop("rax");
+                            PushIndex(inst.Operand is Local u ? u.Index : Convert.ToInt32(inst.Operand), "rax", "r8");
+                            break;
+
+                        case Code.Dup:
+                            Peek("rax");
+                            Push("rax");
+                            break;
+
+                        case Code.Br_S:
+                        case Code.Br:
+                            Builder.AppendLine("jmp " + BrLabelName(inst, method));
+                            break;
+
+                        case Code.Brtrue_S:
+                        case Code.Brtrue:
+                            Pop("rax");
+                            Builder.AppendLine("cmp rax,0");
+                            Builder.AppendLine("jnz " + BrLabelName(inst, method));
+                            break;
+
+                        case Code.Brfalse_S:
+                        case Code.Brfalse:
+                            Pop("rax");
+                            Builder.AppendLine("cmp rax,0");
+                            Builder.AppendLine("jz " + BrLabelName(inst, method));
+                            break;
+
+                        case Code.Clt:
+                            Pop("rax");
+                            Pop("rbx");
+                            Builder.AppendLine("cmp rbx,rax");
+                            Builder.AppendLine("setl bl");
+                            Push("rbx");
+                            break;
+
+                        case Code.Ceq:
+                            Pop("rax");
+                            Pop("rbx");
+                            Builder.AppendLine("cmp rbx,rax");
+                            Builder.AppendLine("sete bl");
+                            Push("rbx");
+                            break;
+
+                        case Code.Call:
+                            var meth = (MethodDef)inst.Operand;
+                            for (var i = meth.Parameters.Count; i > 0; i--)
+                            {
+                                Pop("rax");
+                                PushIndex(i - 1, "rax", "r9");
+                            }
+                            Builder.AppendLine("call " + GetSafeName(meth.FullName));
+                            break;
+
+                        case Code.Ldarg_S:
+                        case Code.Ldarg:
+                            PopIndex(Convert.ToInt32(inst.Operand), "rax", "r9");
+                            Push("rax");
+                            break;
+
+                        case Code.Ldarg_0:
+                            PopIndex(0, "rax", "r9");
+                            Push("rax");
+                            break;
+                        case Code.Ldarg_1:
+                            PopIndex(1, "rax", "r9");
+                            Push("rax");
+                            break;
+                        case Code.Ldarg_2:
+                            PopIndex(2, "rax", "r9");
+                            Push("rax");
+                            break;
+                        case Code.Ldarg_3:
+                            PopIndex(3, "rax", "r9");
+                            Push("rax");
+                            break;
+
+                        case Code.Ldsfld:
+                            PopString(GetSafeName(((FieldDef)inst.Operand).Name), "rax");
+                            Push("rax");
+                            break;
+
+                        case Code.Stsfld:
+                            Pop("rax");
+                            PushString(GetSafeName(((FieldDef)inst.Operand).Name), "rax");
+                            break;
+
+                        default:
+                            Console.WriteLine("Unimplemented opcode: " + inst.OpCode);
+                            break;
+                    }
                 }
             }
         }
@@ -360,9 +371,9 @@ public class Amd64Architecture : Architecture
 
     public override void PopIndex(int index, object obj, string reg) => Builder.AppendLine($"mov {obj},qword [{reg}+{index * PointerSize}]");
 
-    public override void PushString(string str, object obj, string reg) => Builder.AppendLine($"mov [{str}],{obj}");
+    public override void PushString(string str, object obj) => Builder.AppendLine($"mov [{str}],{obj}");
 
-    public override void PopString(string str, object obj, string reg) => Builder.AppendLine($"mov {obj},[{str}]");
+    public override void PopString(string str, object obj) => Builder.AppendLine($"mov {obj},[{str}]");
 
     public override void Peek(object obj) => Builder.AppendLine($"mov {obj},qword [rbp+{StackIndex}]");
 

@@ -38,8 +38,8 @@ public abstract class Architecture
     public abstract void PushIndex(int index, object obj, string reg);
     public abstract void PopIndex(int index, object obj, string reg);
 
-    public abstract void PushString(string str, object obj, string reg);
-    public abstract void PopString(string str, object obj, string reg);
+    public abstract void PushString(string str, object obj);
+    public abstract void PopString(string str, object obj);
 
     public abstract void Peek(object obj);
     public abstract void Push(object obj);
