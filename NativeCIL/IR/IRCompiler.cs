@@ -71,6 +71,11 @@ public class IRCompiler
                         case Code.Nop: AddInstruction(Nop); break;
                         case Code.Ret: AddInstruction(Ret); break;
 
+                        case Code.Pop:
+                            AddInstruction(Add, _bitnessFlag | IRFlag.DestRegister | IRFlag.Immediate, R0, PointerSize);
+                            _stackIndex -= PointerSize;
+                            break;
+
                         case Code.Ldc_I4_0: Push(0); break;
                         case Code.Ldc_I4_1: Push(1); break;
                         case Code.Ldc_I4_2: Push(2); break;
@@ -83,7 +88,10 @@ public class IRCompiler
                         case Code.Ldc_I4_M1: Push(-1); break;
 
                         case Code.Ldc_I4_S:
-                        case Code.Ldc_I4: Push(inst.Operand); break;
+                        case Code.Ldc_I4:
+                        case Code.Ldc_I8:
+                            Push(inst.Operand);
+                            break;
 
                         case Code.Conv_I4:
                         case Code.Conv_I:
@@ -121,14 +129,14 @@ public class IRCompiler
                         case Code.Add:
                             Pop(R1);
                             Pop(R2);
-                            AddInstruction(Add, IRFlag.DestRegister | IRFlag.SrcRegister| _bitnessFlag, R2, R1);
+                            AddInstruction(Add, IRFlag.DestRegister | IRFlag.SrcRegister | _bitnessFlag, R2, R1);
                             Push(R2);
                             break;
 
                         case Code.Sub:
                             Pop(R1);
                             Pop(R2);
-                            AddInstruction(Sub, IRFlag.DestRegister | IRFlag.SrcRegister| _bitnessFlag, R2, R1);
+                            AddInstruction(Sub, IRFlag.DestRegister | IRFlag.SrcRegister | _bitnessFlag, R2, R1);
                             Push(R2);
                             break;
 

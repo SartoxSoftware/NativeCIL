@@ -5,7 +5,11 @@ public static class Program
     public static void Main(string[] _)
     {
         Setup.Initialize();
-        ushort idx = 16;
+
+        long i8 = 5;
+        i8 += 2;
+
+        var idx = 16;
         idx |= 2;
         idx ^= 4;
         var test = (ulong)idx;
