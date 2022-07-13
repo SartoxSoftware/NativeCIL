@@ -19,4 +19,6 @@ public static class IRFlag
     public static int SrcRegister = 1 << 12;
     public static int DestPointer = 1 << 13;
     public static int SrcPointer = 1 << 14;
+
+    public static int Unsigned = 1 << 15;
 }

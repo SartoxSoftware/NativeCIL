@@ -3,9 +3,30 @@ using System.Text;
 using DiscUtils.Iso9660;
 using NativeCIL;
 using NativeCIL.Backend.Amd64;
+using NativeCIL.Backend.IR;
 
 var watch = new Stopwatch();
 var settings = new Settings(args);
+
+/*var ir = new IRCompiler(settings.InputFile, 8);
+var sb = new StringBuilder();
+ir.Compile();
+
+foreach (var inst in ir.Instructions)
+{
+    sb.Append(inst.OpCode.ToString());
+
+    if (inst.Operand1 != null)
+        sb.Append(' ').Append(inst.Operand1);
+
+    if (inst.Operand2 != null)
+        sb.Append(' ').Append(inst.Operand2);
+
+    sb.AppendLine();
+}
+
+File.WriteAllText("test.ir", sb.ToString());*/
+
 var arch = new Amd64Architecture(settings.InputFile, settings.OutputFile);
 
 watch.Start();

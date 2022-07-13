@@ -4,8 +4,8 @@ public enum IROpCode
 {
     Comment, Label,
     Nop,
-    Add, Sub, Mul, Div, Or, And, Not,
+    Add, Sub, Or, Xor, And,
     Set,
     Mov,
-    Jmp, Call, Ret
+    Cmp, Jmp, Call, Ret
 }
