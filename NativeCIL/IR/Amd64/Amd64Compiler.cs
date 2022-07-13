@@ -15,9 +15,9 @@ public class Amd64Compiler : Compiler
         OutputPath = Path.ChangeExtension(compiler.Settings.OutputFile, "elf");
     }
 
-    public override void AddHeader(bool bootableImage)
+    public override void Initialize()
     {
-        if (bootableImage)
+        if (IRCompiler.Settings.ImageType != ImageType.None)
         {
             Builder.AppendLine("[bits 32]");
             Builder.AppendLine("[global _start]");
@@ -176,6 +176,18 @@ public class Amd64Compiler : Compiler
         if (HasFlag(ref flags, IRFlag.NotZero) || HasFlag(ref flags, IRFlag.NotEqual))
             return "jnz";
 
+        if (HasFlag(ref flags, IRFlag.Less))
+            return "jb";
+
+        if (HasFlag(ref flags, IRFlag.GreaterOrEqual))
+            return "jae";
+
+        if (HasFlag(ref flags, IRFlag.Greater))
+            return "ja";
+        
+        if (HasFlag(ref flags, IRFlag.LessOrEqual))
+            return "jle";
+
         return "jmp";
     }
 
@@ -183,6 +195,9 @@ public class Amd64Compiler : Compiler
     {
         if (HasFlag(ref flags, IRFlag.Less))
             return "setl";
+
+        if (HasFlag(ref flags, IRFlag.Greater))
+            return "setg";
 
         if (HasFlag(ref flags, IRFlag.Zero) || HasFlag(ref flags, IRFlag.Equal))
             return "setz";

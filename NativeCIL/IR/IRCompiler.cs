@@ -196,6 +196,62 @@ public class IRCompiler
                             AddInstruction(Jmp, IRFlag.Label | IRFlag.NotZero, BrLabelName(inst, method));
                             break;
 
+                        case Code.Blt_Un_S:
+                        case Code.Blt_Un:
+                        case Code.Blt_S:
+                        case Code.Blt:
+                            Pop(R1);
+                            Pop(R2);
+                            AddInstruction(Cmp, IRFlag.DestRegister | IRFlag.SrcRegister | _bitnessFlag, R2, R1);
+                            AddInstruction(Jmp, IRFlag.Label | IRFlag.Less, BrLabelName(inst, method));
+                            break;
+
+                        case Code.Beq_S:
+                        case Code.Beq:
+                            Pop(R1);
+                            Pop(R2);
+                            AddInstruction(Cmp, IRFlag.DestRegister | IRFlag.SrcRegister | _bitnessFlag, R2, R1);
+                            AddInstruction(Jmp, IRFlag.Label | IRFlag.Equal, BrLabelName(inst, method));
+                            break;
+
+                        case Code.Bge_Un_S:
+                        case Code.Bge_Un:
+                        case Code.Bge_S:
+                        case Code.Bge:
+                            Pop(R1);
+                            Pop(R2);
+                            AddInstruction(Cmp, IRFlag.DestRegister | IRFlag.SrcRegister | _bitnessFlag, R2, R1);
+                            AddInstruction(Jmp, IRFlag.Label | IRFlag.GreaterOrEqual, BrLabelName(inst, method));
+                            break;
+
+                        case Code.Bgt_Un_S:
+                        case Code.Bgt_Un:
+                        case Code.Bgt_S:
+                        case Code.Bgt:
+                            Pop(R1);
+                            Pop(R2);
+                            AddInstruction(Cmp, IRFlag.DestRegister | IRFlag.SrcRegister | _bitnessFlag, R2, R1);
+                            AddInstruction(Jmp, IRFlag.Label | IRFlag.Greater, BrLabelName(inst, method));
+                            break;
+
+                        case Code.Ble_Un_S:
+                        case Code.Ble_Un:
+                        case Code.Ble_S:
+                        case Code.Ble:
+                            Pop(R1);
+                            Pop(R2);
+                            AddInstruction(Cmp, IRFlag.DestRegister | IRFlag.SrcRegister | _bitnessFlag, R2, R1);
+                            AddInstruction(Jmp, IRFlag.Label | IRFlag.LessOrEqual, BrLabelName(inst, method));
+                            break;
+
+                        case Code.Bne_Un_S:
+                        case Code.Bne_Un:
+                            Pop(R1);
+                            Pop(R2);
+                            AddInstruction(Cmp, IRFlag.DestRegister | IRFlag.SrcRegister | _bitnessFlag, R2, R1);
+                            AddInstruction(Jmp, IRFlag.Label | IRFlag.NotEqual, BrLabelName(inst, method));
+                            break;
+
                         case Code.Brfalse_S:
                         case Code.Brfalse:
                             Pop(R1);
@@ -203,11 +259,21 @@ public class IRCompiler
                             AddInstruction(Jmp, IRFlag.Label | IRFlag.Zero, BrLabelName(inst, method));
                             break;
 
+                        case Code.Clt_Un:
                         case Code.Clt:
                             Pop(R1);
                             Pop(R2);
                             AddInstruction(Cmp, IRFlag.DestRegister | IRFlag.SrcRegister | _bitnessFlag, R2, R1);
                             AddInstruction(Set, IRFlag.DestRegister | IRFlag.Less | IRFlag.Byte, R2);
+                            Push(R2);
+                            break;
+
+                        case Code.Cgt_Un:
+                        case Code.Cgt:
+                            Pop(R1);
+                            Pop(R2);
+                            AddInstruction(Cmp, IRFlag.DestRegister | IRFlag.SrcRegister | _bitnessFlag, R2, R1);
+                            AddInstruction(Set, IRFlag.DestRegister | IRFlag.Greater | IRFlag.Byte, R2);
                             Push(R2);
                             break;
 

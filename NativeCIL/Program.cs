@@ -13,7 +13,7 @@ var compiler = new Amd64Compiler(ref ir);
 watch.Start();
 ir.Compile();
 
-compiler.AddHeader(settings.ImageType != ImageType.None);
+compiler.Initialize();
 compiler.Compile();
 if (settings.Format == Format.Elf)
     compiler.Link();
