@@ -4,11 +4,17 @@ using DiscUtils.Iso9660;
 using NativeCIL;
 using NativeCIL.IR;
 using NativeCIL.IR.Amd64;
+using NativeCIL.IR.I386;
 
 var watch = new Stopwatch();
 var settings = new Settings(args);
 var ir = new IRCompiler(ref settings);
-var compiler = new Amd64Compiler(ref ir);
+
+Compiler compiler = settings.Architecture switch
+{
+    TargetArchitecture.Amd64 => new Amd64Compiler(ref ir), 
+    TargetArchitecture.I386 => new I386Compiler(ref ir)
+};
 
 watch.Start();
 ir.Compile();

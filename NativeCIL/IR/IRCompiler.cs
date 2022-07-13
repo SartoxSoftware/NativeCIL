@@ -142,7 +142,7 @@ public class IRCompiler
                         case Code.Xor:
                             Pop(R1);
                             Pop(R2);
-                            AddInstruction(Xor, IRFlag.DestRegister | IRFlag.SrcRegister| _bitnessFlag, R2, R1);
+                            AddInstruction(Xor, IRFlag.DestRegister | IRFlag.SrcRegister | _bitnessFlag, R2, R1);
                             Push(R2);
                             break;
 

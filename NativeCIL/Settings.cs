@@ -6,10 +6,10 @@ public enum ImageType { None, Iso }
 
 public class Settings
 {
-    public string InputFile, OutputFile;
-    public TargetArchitecture Architecture;
-    public Format Format;
-    public ImageType ImageType;
+    public readonly string InputFile, OutputFile;
+    public readonly TargetArchitecture Architecture;
+    public readonly Format Format;
+    public readonly ImageType ImageType;
 
     public Settings(IReadOnlyList<string> args)
     {

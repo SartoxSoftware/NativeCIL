@@ -9,11 +9,11 @@ NativeCIL is, as its name suggests, a CIL to native x86 compiler. It's a [CS2ASM
 # Usage
 ``NativeCIL --architecture <amd64> --format <bin,elf> --image <none,iso> --output <output> <input>``
 
-``NativeCIL -c<amd64> -f<bin,elf> -t<none,iso> -o<output> <input>``
+``NativeCIL -a<amd64> -f<bin,elf> -t<none,iso> -o<output> <input>``
 
 For example:
 
-``./NativeCIL -camd64 -felf -tiso -ooutput.iso TestProject.dll``
+``./NativeCIL -aamd64 -felf -tiso -ooutput.iso TestProject.dll``
 
 You can now try to run on bare metal, or via QEMU:
 

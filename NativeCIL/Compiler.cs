@@ -19,4 +19,6 @@ public abstract class Compiler
     public abstract void Initialize();
     public abstract void Compile();
     public abstract void Link();
+
+    protected static bool HasFlag(ref int flags, int flag) => (flags & flag) != 0;
 }
