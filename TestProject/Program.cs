@@ -7,7 +7,8 @@ class Program
         Setup.Initialize();
         var idx = 16;
         idx |= 2;
-        Cycle('A', 0xFF, idx - 18);
+        idx ^= 4;
+        Cycle('A', 0xFF, idx - 22);
         for (;;);
     }
 
