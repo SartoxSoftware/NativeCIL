@@ -38,7 +38,7 @@ public class IRCompiler
                 if (!field.IsStatic)
                     continue;
 
-                AddInstruction(Label, _bitnessFlag, GetSafeName(field.Name), field.HasConstant ? field.Constant.Value : 0);
+                AddInstruction(Label, _bitnessFlag, GetSafeName(field.FullName), field.HasConstant ? field.Constant.Value : 0);
             }
 
             // Compile methods
@@ -319,13 +319,13 @@ public class IRCompiler
                             break;
 
                         case Code.Ldsfld:
-                            PopString(GetSafeName(((FieldDef)inst.Operand).Name), R1);
+                            PopString(GetSafeName(((FieldDef)inst.Operand).FullName), R1);
                             Push(R1);
                             break;
 
                         case Code.Stsfld:
                             Pop(R1);
-                            PushString(GetSafeName(((FieldDef)inst.Operand).Name), R1);
+                            PushString(GetSafeName(((FieldDef)inst.Operand).FullName), R1);
                             break;
 
                         default:
