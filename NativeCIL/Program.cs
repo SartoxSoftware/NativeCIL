@@ -2,26 +2,21 @@
 using System.Text;
 using DiscUtils.Iso9660;
 using NativeCIL;
-using NativeCIL.Backend.Amd64;
-using NativeCIL.Backend.IR;
-using NativeCIL.Backend.IR.Amd64;
+using NativeCIL.IR;
+using NativeCIL.IR.Amd64;
 
 var watch = new Stopwatch();
 var settings = new Settings(args);
-
-/*var ir = new IRCompiler(ref settings);
-ir.Compile();
-var amd64 = new Amd64Compiler(ref ir);
-amd64.Compile();*/
-
-var arch = new Amd64Architecture(settings.InputFile, settings.OutputFile);
+var ir = new IRCompiler(ref settings);
+var compiler = new Amd64Compiler(ref ir);
 
 watch.Start();
-arch.Initialize();
-arch.Compile();
-arch.Assemble();
+ir.Compile();
+
+compiler.AddHeader();
+compiler.Compile();
 if (settings.Format == Format.Elf)
-    arch.Link();
+    compiler.Link();
 
 if (settings.ImageType == ImageType.Iso)
 {
@@ -30,16 +25,16 @@ if (settings.ImageType == ImageType.Iso)
 
     using var cd = File.OpenRead("Limine/limine-cd.bin");
     using var sys = File.OpenRead("Limine/limine.sys");
-    using var kernel = File.OpenRead(arch.OutputPath);
+    using var kernel = File.OpenRead(compiler.OutputPath);
 
     var iso = new CDBuilder
     {
         UseJoliet = true,
-        VolumeIdentifier = arch.AssemblyName,
+        VolumeIdentifier = ir.AssemblyName,
         UpdateIsolinuxBootTable = true
     };
     iso.AddFile("limine.sys", sys);
-    iso.AddFile("limine.cfg", Encoding.ASCII.GetBytes($"TIMEOUT=0\n:{arch.AssemblyName}\nPROTOCOL=multiboot2\nKERNEL_PATH=boot:///kernel.elf"));
+    iso.AddFile("limine.cfg", Encoding.ASCII.GetBytes($"TIMEOUT=0\n:{ir.AssemblyName}\nPROTOCOL=multiboot2\nKERNEL_PATH=boot:///kernel.elf"));
     iso.AddFile("kernel.elf", kernel);
     iso.SetBootImage(cd, BootDeviceEmulation.NoEmulation, 0);
     iso.Build(settings.OutputFile);

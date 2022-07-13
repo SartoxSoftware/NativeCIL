@@ -1,4 +1,4 @@
-namespace NativeCIL.Backend.IR;
+namespace NativeCIL.IR;
 
 public record IRRegister(int Value, int Offset = 0, int ExplicitType = 0)
 {

@@ -1,23 +1,29 @@
 using System.Text.RegularExpressions;
 using dnlib.DotNet;
 using dnlib.DotNet.Emit;
-using static NativeCIL.Backend.IR.IROpCode;
-using static NativeCIL.Backend.IR.IRRegister;
+using static NativeCIL.IR.IROpCode;
+using static NativeCIL.IR.IRRegister;
 
-namespace NativeCIL.Backend.IR;
+namespace NativeCIL.IR;
 
 public class IRCompiler
 {
-    private ModuleDefMD _module;
+    private readonly ModuleDefMD _module;
+    private readonly int _bitnessFlag;
     private int _stackIndex;
 
+    public string AssemblyName => _module.Assembly.Name;
+
     public readonly int PointerSize;
+    public readonly Settings Settings;
     public readonly List<IRInstruction> Instructions;
 
     public IRCompiler(ref Settings settings)
     {
         _module = ModuleDefMD.Load(settings.InputFile);
+        _bitnessFlag = settings.Architecture == TargetArchitecture.Amd64 ? IRFlag.Qword : IRFlag.Dword;
         _stackIndex = 0;
+        Settings = settings;
         PointerSize = settings.Architecture == TargetArchitecture.Amd64 ? 8 : 4;
         Instructions = new();
     }
@@ -32,7 +38,7 @@ public class IRCompiler
                 if (!field.IsStatic)
                     continue;
 
-                AddInstruction(Label, IRFlag.Qword, GetSafeName(field.Name), field.HasConstant ? field.Constant.Value : 0);
+                AddInstruction(Label, _bitnessFlag, GetSafeName(field.Name), field.HasConstant ? field.Constant.Value : 0);
             }
 
             // Compile methods
@@ -82,48 +88,48 @@ public class IRCompiler
                         case Code.Conv_I4:
                         case Code.Conv_I:
                             Pop(R1);
-                            AddInstruction(And, IRFlag.Dword | IRFlag.DestRegister | IRFlag.Immediate, R1, 0xFFFFFFFF);
+                            AddInstruction(And, _bitnessFlag | IRFlag.DestRegister | IRFlag.Immediate, R1, 0xFFFFFFFF);
                             Push(R1);
                             break;
 
                         case Code.Conv_U1:
                         case Code.Conv_I1:
                             Pop(R1);
-                            AddInstruction(And, IRFlag.Byte | IRFlag.DestRegister | IRFlag.Immediate, R1, 0xFF);
+                            AddInstruction(And, _bitnessFlag | IRFlag.DestRegister | IRFlag.Immediate, R1, 0xFF);
                             Push(R1);
                             break;
 
                         case Code.Stind_I1:
                             Pop(R1); // Value
                             Pop(R2); // Address
-                            AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer, R2.Qword, R1.Byte);
+                            AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer, PointerSize == 8 ? R2.Qword : R2.Dword, R1.Byte);
                             break;
 
                         case Code.Add:
                             Pop(R1);
                             Pop(R2);
-                            AddInstruction(Add, IRFlag.DestRegister | IRFlag.SrcRegister, R2, R1);
+                            AddInstruction(Add, IRFlag.DestRegister | IRFlag.SrcRegister| _bitnessFlag, R2, R1);
                             Push(R2);
                             break;
 
                         case Code.Sub:
                             Pop(R1);
                             Pop(R2);
-                            AddInstruction(Sub, IRFlag.DestRegister | IRFlag.SrcRegister, R2, R1);
+                            AddInstruction(Sub, IRFlag.DestRegister | IRFlag.SrcRegister| _bitnessFlag, R2, R1);
                             Push(R2);
                             break;
 
                         case Code.Or:
                             Pop(R1);
                             Pop(R2);
-                            AddInstruction(Or, IRFlag.DestRegister | IRFlag.SrcRegister, R2, R1);
+                            AddInstruction(Or, IRFlag.DestRegister | IRFlag.SrcRegister | _bitnessFlag, R2, R1);
                             Push(R2);
                             break;
 
                         case Code.Xor:
                             Pop(R1);
                             Pop(R2);
-                            AddInstruction(Xor, IRFlag.DestRegister | IRFlag.SrcRegister, R2, R1);
+                            AddInstruction(Xor, IRFlag.DestRegister | IRFlag.SrcRegister| _bitnessFlag, R2, R1);
                             Push(R2);
                             break;
 
@@ -186,32 +192,30 @@ public class IRCompiler
                         case Code.Brtrue_S:
                         case Code.Brtrue:
                             Pop(R1);
-                            AddInstruction(Cmp, IRFlag.DestRegister | IRFlag.Immediate, R1, 0);
+                            AddInstruction(Cmp, IRFlag.DestRegister | IRFlag.Immediate | _bitnessFlag, R1, 0);
                             AddInstruction(Jmp, IRFlag.Label | IRFlag.NotZero, BrLabelName(inst, method));
                             break;
 
                         case Code.Brfalse_S:
                         case Code.Brfalse:
                             Pop(R1);
-                            AddInstruction(Cmp, IRFlag.DestRegister | IRFlag.Immediate, R1, 0);
+                            AddInstruction(Cmp, IRFlag.DestRegister | IRFlag.Immediate | _bitnessFlag, R1, 0);
                             AddInstruction(Jmp, IRFlag.Label | IRFlag.Zero, BrLabelName(inst, method));
                             break;
 
                         case Code.Clt:
                             Pop(R1);
                             Pop(R2);
-                            AddInstruction(Cmp, IRFlag.DestRegister | IRFlag.SrcRegister, R2, R1);
+                            AddInstruction(Cmp, IRFlag.DestRegister | IRFlag.SrcRegister | _bitnessFlag, R2, R1);
                             AddInstruction(Set, IRFlag.DestRegister | IRFlag.Less | IRFlag.Byte, R2);
-                            //Builder.AppendLine("setl bl");
                             Push(R2);
                             break;
 
                         case Code.Ceq:
                             Pop(R1);
                             Pop(R2);
-                            AddInstruction(Cmp, IRFlag.DestRegister | IRFlag.SrcRegister, R2, R1);
+                            AddInstruction(Cmp, IRFlag.DestRegister | IRFlag.SrcRegister | _bitnessFlag, R2, R1);
                             AddInstruction(Set, IRFlag.DestRegister | IRFlag.Equal, R2);
-                            //Builder.AppendLine("sete bl");
                             Push(R2);
                             break;
 
@@ -268,8 +272,10 @@ public class IRCompiler
     }
 
     private static string GetSafeName(string name) => Regex.Replace(name, @"[^0-9a-zA-Z]+", "_");
+
     private static string BrLabelName(Instruction ins, MethodDef def, bool create = false) =>
         $"LB_{def.GetHashCode():X4}{(create ? ins.Offset : ((Instruction)ins.Operand).Offset):X4}";
+
     private static IEnumerable<Instruction> GetAllBranches(MethodDef method)
     {
         foreach (var br in method.Body.Instructions)
@@ -281,45 +287,39 @@ public class IRCompiler
         Instructions.Add(new IRInstruction(opCode, flags, operand1, operand2));
 
     private void PushIndex(int index, object obj, IRRegister reg) =>
-        AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer | (PointerSize == 8 ? IRFlag.Qword :
-            IRFlag.Dword), reg + index * PointerSize, obj);
+        AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer | _bitnessFlag, reg + index * PointerSize, obj);
 
     private void PopIndex(int index, IRRegister dst, IRRegister src) =>
         AddInstruction(Mov,
-            IRFlag.DestRegister | IRFlag.SrcRegister | IRFlag.SrcPointer |
-            (PointerSize == 8 ? IRFlag.Qword : IRFlag.Dword), dst, src + index * PointerSize);
+            IRFlag.DestRegister | IRFlag.SrcRegister | IRFlag.SrcPointer | _bitnessFlag, dst, src + index * PointerSize);
 
     private void PushString(string str, IRRegister reg) =>
-        AddInstruction(Mov, IRFlag.DestPointer | IRFlag.Label | IRFlag.SrcRegister | IRFlag.Qword, str, reg);
+        AddInstruction(Mov, IRFlag.DestPointer | IRFlag.Label | IRFlag.SrcRegister | _bitnessFlag, str, reg);
 
     private void PopString(string str, IRRegister reg) =>
-        AddInstruction(Mov, IRFlag.SrcPointer | IRFlag.Label | IRFlag.DestRegister | IRFlag.Qword, reg, str);
+        AddInstruction(Mov, IRFlag.SrcPointer | IRFlag.Label | IRFlag.DestRegister | _bitnessFlag, reg, str);
 
     private void Peek(IRRegister reg)
-        => AddInstruction(Mov, IRFlag.DestRegister | IRFlag.SrcRegister | IRFlag.SrcPointer | (PointerSize ==
-            8 ? IRFlag.Qword : IRFlag.Dword), reg, R0 + _stackIndex);
+        => AddInstruction(Mov, IRFlag.DestRegister | IRFlag.SrcRegister | IRFlag.SrcPointer | _bitnessFlag, reg, R0 + _stackIndex);
 
     private void Push(object imm)
     {
         _stackIndex += PointerSize;
         var index = _stackIndex;
-        AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer | (PointerSize == 8 ? IRFlag.Qword :
-            IRFlag.Dword) | IRFlag.Immediate, R0 + index, imm);
+        AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer | _bitnessFlag | IRFlag.Immediate, R0 + index, imm);
     }
 
     private void Push(IRRegister reg)
     {
         _stackIndex += PointerSize;
         var index = _stackIndex;
-        AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer | IRFlag.SrcRegister | (PointerSize == 8
-            ? IRFlag.Qword : IRFlag.Dword), R0 + index, reg);
+        AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer | IRFlag.SrcRegister | _bitnessFlag, R0 + index, reg);
     }
 
     private void Pop(IRRegister reg)
     {
         var index = _stackIndex;
         _stackIndex -= PointerSize;
-        AddInstruction(Mov, IRFlag.DestRegister | IRFlag.SrcRegister | IRFlag.SrcPointer | (PointerSize == 8
-            ? IRFlag.Qword : IRFlag.Dword), reg, R0 + index);
+        AddInstruction(Mov, IRFlag.DestRegister | IRFlag.SrcRegister | IRFlag.SrcPointer | _bitnessFlag, reg, R0 + index);
     }
 }

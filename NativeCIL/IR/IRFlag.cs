@@ -1,4 +1,4 @@
-namespace NativeCIL.Backend.IR;
+namespace NativeCIL.IR;
 
 public static class IRFlag
 {
