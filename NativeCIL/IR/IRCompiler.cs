@@ -87,6 +87,7 @@ public class IRCompiler
 
                         case Code.Conv_I4:
                         case Code.Conv_I:
+                        case Code.Conv_U:
                             Pop(R1);
                             AddInstruction(And, _bitnessFlag | IRFlag.DestRegister | IRFlag.Immediate, R1, 0xFFFFFFFF);
                             Push(R1);
@@ -97,6 +98,18 @@ public class IRCompiler
                             Pop(R1);
                             AddInstruction(And, _bitnessFlag | IRFlag.DestRegister | IRFlag.Immediate, R1, 0xFF);
                             Push(R1);
+                            break;
+
+                        case Code.Conv_U2:
+                        case Code.Conv_I2:
+                            Pop(R1);
+                            AddInstruction(And, _bitnessFlag | IRFlag.DestRegister | IRFlag.Immediate, R1, 0xFFFF);
+                            Push(R1);
+                            break;
+
+                        case Code.Conv_U8:
+                        case Code.Conv_I8:
+                            // The value is already 64-bit, no need to convert.
                             break;
 
                         case Code.Stind_I1:

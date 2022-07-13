@@ -5,10 +5,12 @@ class Program
     public static void Main(string[] _)
     {
         Setup.Initialize();
-        var idx = 16;
+        ushort idx = 16;
         idx |= 2;
         idx ^= 4;
-        Cycle('A', 0xFF, idx - 22);
+        var test = (ulong)idx;
+        var finalIndex = (int)test;
+        Cycle('A', 0xFF, finalIndex - 22);
         for (;;);
     }
 
