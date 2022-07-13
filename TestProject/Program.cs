@@ -5,7 +5,9 @@ class Program
     public static void Main(string[] _)
     {
         Setup.Initialize();
-        Cycle('A', 0xFF, 0);
+        var idx = 16;
+        idx |= 2;
+        Cycle('A', 0xFF, idx - 18);
         for (;;);
     }
 

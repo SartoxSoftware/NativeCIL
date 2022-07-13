@@ -215,6 +215,13 @@ public class Amd64Architecture : Architecture
                             Push("rbx");
                             break;
 
+                        case Code.Or:
+                            Pop("rax");
+                            Pop("rbx");
+                            Builder.AppendLine("or rbx,rax");
+                            Push("rbx");
+                            break;
+
                         case Code.Ldloc_0:
                             PopIndex(0, "rax", "r8");
                             Push("rax");
