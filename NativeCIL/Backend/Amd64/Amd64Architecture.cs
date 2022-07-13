@@ -2,11 +2,19 @@ using System.Diagnostics;
 using dnlib.DotNet;
 using dnlib.DotNet.Emit;
 
-namespace NativeCIL.Amd64;
+namespace NativeCIL.Backend.Amd64;
 
 public class Amd64Architecture : Architecture
 {
-    public Amd64Architecture(string path) : base(path) {}
+    private readonly string _asmPath, _binPath, _objPath;
+
+    public Amd64Architecture(string input, string output) : base(input)
+    {
+        _asmPath = Path.ChangeExtension(output, "asm");
+        _binPath = Path.ChangeExtension(output, "bin");
+        _objPath = Path.ChangeExtension(output, "o");
+        OutputPath = Path.ChangeExtension(output, "elf");
+    }
 
     public override int PointerSize => 8;
 
@@ -369,16 +377,15 @@ public class Amd64Architecture : Architecture
 
     public override void Assemble()
     {
-        Directory.CreateDirectory("Output");
-        File.WriteAllText("Output/kernel.asm", Builder.ToString());
-        Process.Start("nasm", "-fbin Output/kernel.asm -o Output/kernel.bin").WaitForExit();
+        File.WriteAllText(_asmPath, Builder.ToString());
+        Process.Start("nasm", $"-fbin {_asmPath} -o {_binPath}").WaitForExit();
     }
 
     public override void Link()
     {
         // TODO: Replace objcopy and lld with a C# linker
-        Process.Start("objcopy", "-Ibinary -Oelf64-x86-64 -Bi386 Output/kernel.bin Output/kernel.o");
-        Process.Start("ld.lld", "-melf_x86_64 -Tlinker.ld -oOutput/kernel.elf Output/kernel.o").WaitForExit();
+        Process.Start("objcopy", $"-Ibinary -Oelf64-x86-64 -Bi386 {_binPath} {_objPath}");
+        Process.Start("ld.lld", $"-melf_x86_64 -Tlinker.ld -o{OutputPath} {_objPath}").WaitForExit();
     }
 
     public override void PushIndex(int index, object obj, string reg) => Builder.AppendLine($"mov qword [{reg}+{index * PointerSize}],{obj}");

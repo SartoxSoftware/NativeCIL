@@ -11,6 +11,8 @@ public abstract class Architecture
     protected ModuleDefMD Module;
     protected int StackIndex;
 
+    public string OutputPath;
+
     public string AssemblyName => Module.Assembly.Name;
 
     public abstract int PointerSize { get; }
