@@ -6,6 +6,8 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <OutputPath>../bin</OutputPath>
+        <Configurations>Debug;Release</Configurations>
+        <Platforms>x64;AnyCPU</Platforms>
     </PropertyGroup>
 
     <ItemGroup>

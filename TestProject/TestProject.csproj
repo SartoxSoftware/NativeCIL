@@ -6,6 +6,8 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <OutputPath>../bin</OutputPath>
         <UseAppHost>false</UseAppHost>
+        <Configurations>Debug;Release</Configurations>
+        <Platforms>x64;AnyCPU</Platforms>
     </PropertyGroup>
     
     <PropertyGroup>

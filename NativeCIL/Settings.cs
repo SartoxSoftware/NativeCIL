@@ -22,16 +22,17 @@ public class Settings
                 continue;
             }
 
-            /*var param = arg[1..];
-            string argument;
-            if (param.StartsWith('-'))
+            string param, argument;
+            if (arg.StartsWith("--"))
             {
-                param = param[1..];
+                param = arg[2..];
                 argument = args[i++];
             }
-            else argument = param[1..];*/
-            var param = arg[1].ToString();
-            var argument = arg[2..];
+            else
+            {
+                param = arg[1].ToString();
+                argument = arg[2..];
+            }
 
             switch (param)
             {
