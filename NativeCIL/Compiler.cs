@@ -16,7 +16,7 @@ public abstract class Compiler
         Builder = new StringBuilder();
     }
 
-    public abstract void AddHeader();
+    public abstract void AddHeader(bool bootableImage);
     public abstract void Compile();
     public abstract void Link();
 }
