@@ -14,11 +14,11 @@ public class IRCompiler
     public readonly int PointerSize;
     public readonly List<IRInstruction> Instructions;
 
-    public IRCompiler(string path, int pointerSize)
+    public IRCompiler(ref Settings settings)
     {
-        _module = ModuleDefMD.Load(path);
+        _module = ModuleDefMD.Load(settings.InputFile);
         _stackIndex = 0;
-        PointerSize = pointerSize;
+        PointerSize = settings.Architecture == TargetArchitecture.Amd64 ? 8 : 4;
         Instructions = new();
     }
 
@@ -96,8 +96,7 @@ public class IRCompiler
                         case Code.Stind_I1:
                             Pop(R1); // Value
                             Pop(R2); // Address
-                            AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer, R2, R1);
-                            //Builder.AppendLine("mov [rbx],al");
+                            AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer, R2.Qword, R1.Byte);
                             break;
 
                         case Code.Add:
@@ -202,7 +201,7 @@ public class IRCompiler
                             Pop(R1);
                             Pop(R2);
                             AddInstruction(Cmp, IRFlag.DestRegister | IRFlag.SrcRegister, R2, R1);
-                            AddInstruction(Set, IRFlag.DestRegister | IRFlag.Less, R2);
+                            AddInstruction(Set, IRFlag.DestRegister | IRFlag.Less | IRFlag.Byte, R2);
                             //Builder.AppendLine("setl bl");
                             Push(R2);
                             break;
@@ -291,10 +290,10 @@ public class IRCompiler
             (PointerSize == 8 ? IRFlag.Qword : IRFlag.Dword), dst, src + index * PointerSize);
 
     private void PushString(string str, IRRegister reg) =>
-        AddInstruction(Mov, IRFlag.DestPointer | IRFlag.Label | IRFlag.SrcRegister, str, reg);
+        AddInstruction(Mov, IRFlag.DestPointer | IRFlag.Label | IRFlag.SrcRegister | IRFlag.Qword, str, reg);
 
     private void PopString(string str, IRRegister reg) =>
-        AddInstruction(Mov, IRFlag.SrcPointer | IRFlag.Label | IRFlag.DestRegister, reg, str);
+        AddInstruction(Mov, IRFlag.SrcPointer | IRFlag.Label | IRFlag.DestRegister | IRFlag.Qword, reg, str);
 
     private void Peek(IRRegister reg)
         => AddInstruction(Mov, IRFlag.DestRegister | IRFlag.SrcRegister | IRFlag.SrcPointer | (PointerSize ==
