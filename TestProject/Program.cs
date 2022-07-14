@@ -12,9 +12,10 @@ public static class Program
         var idx = 16;
         idx |= 2;
         idx ^= 4;
+        idx <<= 3;
         var test = (ulong)idx;
         var finalIndex = (int)test;
-        Cycle('A', 0xFF, finalIndex - 22);
+        Cycle('A', 0xFF, finalIndex - 176);
         for (;;);
     }
 

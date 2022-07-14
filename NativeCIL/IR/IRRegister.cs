@@ -7,6 +7,7 @@ public record IRRegister(int Value, int Offset = 0, int ExplicitType = 0)
     public static readonly IRRegister R2 = new(2);
     public static readonly IRRegister R3 = new(3);
     public static readonly IRRegister R4 = new(4);
+    public static readonly IRRegister R5 = new(5);
 
     public IRRegister Byte => this with { ExplicitType = 1 };
     public IRRegister Word => this with { ExplicitType = 2 };

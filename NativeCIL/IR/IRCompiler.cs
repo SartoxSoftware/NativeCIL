@@ -53,12 +53,17 @@ public class IRCompiler
                     continue;
                 }
 
+                var branches = GetAllBranches(method).ToList();
                 AddInstruction(Label, -1, GetSafeName(method.FullName));
 
                 foreach (var inst in method.Body.Instructions)
                 {
-                    if (inst.OpCode.OperandType is OperandType.InlineBrTarget or OperandType.ShortInlineBrTarget)
-                        AddInstruction(Label, -1, BrLabelName(inst, method, true));
+                    foreach (var branch in branches)
+                        if (((Instruction)branch.Operand).Offset == inst.Offset)
+                        {
+                            AddInstruction(Label, -1, BrLabelName(inst, method, true));
+                            break;
+                        }
 
                     AddInstruction(Comment, -1, inst.OpCode);
                     switch (inst.OpCode.Code)
@@ -166,6 +171,20 @@ public class IRCompiler
                             Pop(R1);
                             Pop(R2);
                             AddInstruction(Xor, IRFlag.DestRegister | IRFlag.SrcRegister | _bitnessFlag, R2, R1);
+                            Push(R2);
+                            break;
+
+                        case Code.Shl:
+                            Pop(R5);
+                            Pop(R2);
+                            AddInstruction(Shl, IRFlag.DestRegister | IRFlag.SrcRegister | _bitnessFlag, R2, R5.Byte);
+                            Push(R2);
+                            break;
+
+                        case Code.Shr:
+                            Pop(R1);
+                            Pop(R2);
+                            AddInstruction(Shr, IRFlag.DestRegister | IRFlag.SrcRegister | _bitnessFlag, R2, R1);
                             Push(R2);
                             break;
 
@@ -377,6 +396,13 @@ public class IRCompiler
 
     private static string BrLabelName(Instruction ins, MethodDef def, bool create = false) =>
         $"LB_{def.GetHashCode():X4}{(create ? ins.Offset : ((Instruction)ins.Operand).Offset):X4}";
+
+    private static IEnumerable<Instruction> GetAllBranches(MethodDef method)
+    {
+        foreach (var br in method.Body.Instructions)
+            if (br.OpCode.OperandType is OperandType.InlineBrTarget or OperandType.ShortInlineBrTarget)
+                yield return br;
+    }
 
     private void AddInstruction(IROpCode opCode, int flags = 0, object? operand1 = null, object? operand2 = null) =>
         Instructions.Add(new IRInstruction(opCode, flags, operand1, operand2));

@@ -146,6 +146,8 @@ public class Amd64Compiler : Compiler
                 case Or: Builder.AppendLine($"or {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
                 case Xor: Builder.AppendLine($"xor {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
                 case And: Builder.AppendLine($"and {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
+                case Shl: Builder.AppendLine($"shl {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
+                case Shr: Builder.AppendLine($"shr {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
                 case Set: Builder.AppendLine($"{GetSetType(inst.Flags)} {MapObject(0, inst.Operand1, inst.Flags)}"); break;
                 case Mov: Builder.AppendLine($"mov {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
                 case Cmp: Builder.AppendLine($"cmp {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
@@ -237,6 +239,7 @@ public class Amd64Compiler : Compiler
                 2 => "bx",
                 3 => "8",
                 4 => "dx",
+                5 => "cx",
                 _ => string.Empty
             };
 
