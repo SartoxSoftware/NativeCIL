@@ -1,3 +1,4 @@
+using System.Reflection;
 using static NativeCIL.IR.IROpCode;
 
 namespace NativeCIL.IR.Amd64;
@@ -162,7 +163,7 @@ public class Amd64Compiler : Compiler
     {
         // TODO: Replace objcopy and lld with a C# linker
         Utils.StartSilent("objcopy", $"-Ibinary -Oelf64-x86-64 -Bi386 {_binPath} {_objPath}");
-        Utils.StartSilent("ld.lld", $"-melf_x86_64 -Tlinker.ld -o{OutputPath} {_objPath}");
+        Utils.StartSilent("ld.lld", $"-melf_x86_64 -T{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "linker.ld")} -o{OutputPath} {_objPath}");
     }
 
     // On x86 at least, equal and zero mean the same thing (ZF = 1)
