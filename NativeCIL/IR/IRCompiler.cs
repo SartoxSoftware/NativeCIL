@@ -121,6 +121,7 @@ public class IRCompiler
                             break;
 
                         case Code.Stind_I1:
+                            // TODO of code generation, use R1.Qword
                             Pop(R1); // Value
                             Pop(R2); // Address
                             AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer, PointerSize == 8 ? R2.Qword : R2.Dword, R1.Byte);

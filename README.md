@@ -2,7 +2,7 @@
 NativeCIL is, as its name suggests, a CIL to native x86 compiler. It's a [CS2ASM](https://github.com/nifanfa/CS2ASM) rewrite, which is meant to be faster and more efficient and stable.
 
 # Dependencies
-- nasm
+- yasm
 - objcopy
 - lld
 

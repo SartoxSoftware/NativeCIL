@@ -20,14 +20,13 @@ public class Amd64Compiler : Compiler
         if (IRCompiler.Settings.ImageType != ImageType.None)
         {
             Builder.AppendLine("[bits 32]");
-            Builder.AppendLine("[global _start]");
 
             Builder.AppendLine("KERNEL_STACK equ 0x00200000");
 
             Builder.AppendLine("dd 0xE85250D6"); // Magic
             Builder.AppendLine("dd 0"); // Architecture
             Builder.AppendLine("dd 16"); // Header length
-            Builder.AppendLine("dd -(0xE85250D6+16)"); // Checksum
+            Builder.AppendLine("dd 0x100000000-(0xE85250D6+16)"); // Checksum
             // Required tag
             Builder.AppendLine("dw 0");
             Builder.AppendLine("dw 0");
@@ -52,17 +51,17 @@ public class Amd64Compiler : Compiler
             Builder.AppendLine("mov edi,p4_table");
             Builder.AppendLine("push di");
             Builder.AppendLine("mov eax,p3_table");
-            Builder.AppendLine("or eax,0b11");
+            Builder.AppendLine("or eax,3");
             Builder.AppendLine("mov [p4_table],eax");
             Builder.AppendLine("mov eax,p2_table");
-            Builder.AppendLine("or eax,0b11");
+            Builder.AppendLine("or eax,3");
             Builder.AppendLine("mov [p3_table],eax");
             Builder.AppendLine("mov ecx,0");
 
             Builder.AppendLine(".Map_P2_Table:");
             Builder.AppendLine("mov eax,0x200000");
             Builder.AppendLine("mul ecx");
-            Builder.AppendLine("or eax,0b10000011");
+            Builder.AppendLine("or eax,131");
             Builder.AppendLine("mov [p2_table+ecx*8],eax");
             Builder.AppendLine("inc ecx");
             Builder.AppendLine("cmp ecx,512");
@@ -76,7 +75,7 @@ public class Amd64Compiler : Compiler
             Builder.AppendLine("nop");
             Builder.AppendLine("nop");
             Builder.AppendLine("lidt [IDT]");
-            Builder.AppendLine("mov eax,10100000b");
+            Builder.AppendLine("mov eax,160");
             Builder.AppendLine("mov cr4,eax");
             Builder.AppendLine("mov edx,edi");
             Builder.AppendLine("mov cr3,edx");
@@ -89,6 +88,12 @@ public class Amd64Compiler : Compiler
             Builder.AppendLine("mov cr0,ebx");
             Builder.AppendLine("lgdt [GDT.Pointer]");
             Builder.AppendLine("sti");
+            Builder.AppendLine("mov ax,0x0010");
+            Builder.AppendLine("mov ds,ax");
+            Builder.AppendLine("mov es,ax");
+            Builder.AppendLine("mov fs,ax");
+            Builder.AppendLine("mov gs,ax");
+            Builder.AppendLine("mov ss,ax");
             Builder.AppendLine("jmp 0x0008:Main");
 
             Builder.AppendLine("GDT:");
@@ -113,12 +118,6 @@ public class Amd64Compiler : Compiler
 
             Builder.AppendLine("[bits 64]");
             Builder.AppendLine("Main:");
-            Builder.AppendLine("mov ax,0x0010");
-            Builder.AppendLine("mov ds,ax");
-            Builder.AppendLine("mov es,ax");
-            Builder.AppendLine("mov fs,ax");
-            Builder.AppendLine("mov gs,ax");
-            Builder.AppendLine("mov ss,ax");
             Builder.AppendLine("pop rsi");
             Builder.AppendLine("pop rdx");
             Builder.AppendLine("mov rbp,KERNEL_STACK-1024");
@@ -157,7 +156,7 @@ public class Amd64Compiler : Compiler
         }
         
         File.WriteAllText(_asmPath, Builder.ToString());
-        Process.Start("nasm", $"-fbin {_asmPath} -o {_binPath}").WaitForExit();
+        Process.Start("yasm", $"-fbin {_asmPath} -o {_binPath}").WaitForExit();
     }
 
     public override void Link()
@@ -247,18 +246,62 @@ public class Amd64Compiler : Compiler
                 str = "e" + str;
             else if (qword || reg?.ExplicitType == 4)
                 str = "r" + str;
+
+            // TODO: Improve code generation by using the high registers of AMD64
+            /*str = "r" + (reg?.Value + 8);
+
+            if (isByte || reg?.ExplicitType == 1)
+                str = reg?.Value switch
+                {
+                    0 => "ah",
+                    1 => "al",
+                    2 => "cl",
+                    3 => "dl",
+                    4 => "bl",
+                    _ => string.Empty
+                };
+            else if (word || reg?.ExplicitType == 2)
+                str = reg?.Value switch
+                {
+                    0 => "bp",
+                    1 => "ax",
+                    2 => "cx",
+                    3 => "dx",
+                    4 => "bx",
+                    _ => string.Empty
+                };
+            else if (dword || reg?.ExplicitType == 3)
+                str = reg?.Value switch
+                {
+                    0 => "ebp",
+                    1 => "eax",
+                    2 => "ecx",
+                    3 => "edx",
+                    4 => "ebx",
+                    _ => string.Empty
+                };
+            else if (reg?.ExplicitType == 4)
+                str = reg?.Value switch
+                {
+                    0 => "rbp",
+                    1 => "rax",
+                    2 => "rcx",
+                    3 => "rdx",
+                    4 => "rbx",
+                    _ => string.Empty
+                };*/
         }
         else str = operand.ToString();
 
         if (reg?.Offset > 0)
             str += "+" + reg.Offset;
 
-        if ((op == 0 && dstPtr) || (op == 1 && srcPtr))
-        {
-            str = $"[{str}]";
-            if (qword && !label)
-                str = "qword " + str;
-        }
+        if ((op != 0 || !dstPtr) && (op != 1 || !srcPtr))
+            return str;
+
+        str = $"[{str}]";
+        if (qword && !label)
+            str = "qword " + str;
 
         return str;
     }
