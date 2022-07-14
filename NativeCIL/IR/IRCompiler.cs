@@ -160,6 +160,13 @@ public class IRCompiler
                             Push(R2);
                             break;
 
+                        case Code.Mul:
+                            Pop(R1);
+                            Pop(R2);
+                            AddInstruction(Mul, IRFlag.DestRegister | IRFlag.SrcRegister | _bitnessFlag, R2, R1);
+                            Push(R2);
+                            break;
+
                         case Code.Or:
                             Pop(R1);
                             Pop(R2);

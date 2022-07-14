@@ -143,6 +143,7 @@ public class Amd64Compiler : Compiler
                 case Nop: break; // Common optimization
                 case Add: Builder.AppendLine($"add {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
                 case Sub: Builder.AppendLine($"sub {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
+                case Mul: Builder.AppendLine($"imul {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
                 case Or: Builder.AppendLine($"or {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
                 case Xor: Builder.AppendLine($"xor {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
                 case And: Builder.AppendLine($"and {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
