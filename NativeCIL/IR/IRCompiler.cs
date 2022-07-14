@@ -146,6 +146,12 @@ public class IRCompiler
                             AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer, PointerSize == 8 ? R2.Qword : R2.Dword, R1.Qword);
                             break;
 
+                        case Code.Ldind_U2:
+                            Pop(R1);
+                            AddInstruction(Mov, IRFlag.SrcRegister | IRFlag.SrcPointer | _bitnessFlag, R2, R1);
+                            Push(R2);
+                            goto case Code.Conv_I2;
+
                         case Code.Add:
                             Pop(R1);
                             Pop(R2);
