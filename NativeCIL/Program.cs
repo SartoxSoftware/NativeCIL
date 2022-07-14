@@ -42,8 +42,8 @@ if (settings.ImageType == ImageType.Iso)
     if (settings.Format == Format.Bin)
         throw new Exception("Raw binaries cannot be used with Limine!");
 
-    using var cd = File.OpenRead("Limine/limine-cd.bin");
-    using var sys = File.OpenRead("Limine/limine.sys");
+    using var cd = File.OpenRead(Path.Combine(Path.GetDirectoryName(compiler.OutputPath), "Limine/limine-cd.bin"));
+    using var sys = File.OpenRead(Path.Combine(Path.GetDirectoryName(compiler.OutputPath), "Limine/limine.sys"));
     using var kernel = File.OpenRead(compiler.OutputPath);
 
     var iso = new CDBuilder
