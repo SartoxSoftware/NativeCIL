@@ -122,12 +122,23 @@ public class IRCompiler
                             Pop(R2); // Address
                             AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer, PointerSize == 8 ? R2.Qword : R2.Dword, R1.Byte);
                             break;
-
                         case Code.Stind_I2:
                             // TODO of code generation, use R1.Qword
                             Pop(R1); // Value
                             Pop(R2); // Address
                             AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer, PointerSize == 8 ? R2.Qword : R2.Dword, R1.Word);
+                            break;
+                        case Code.Stind_I4:
+                            // TODO of code generation, use R1.Qword
+                            Pop(R1); // Value
+                            Pop(R2); // Address
+                            AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer, PointerSize == 8 ? R2.Qword : R2.Dword, R1.Dword);
+                            break;
+                        case Code.Stind_I8:
+                            // TODO of code generation, use R1.Qword
+                            Pop(R1); // Value
+                            Pop(R2); // Address
+                            AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer, PointerSize == 8 ? R2.Qword : R2.Dword, R1.Qword);
                             break;
 
                         case Code.Add:
