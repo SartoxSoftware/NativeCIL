@@ -90,6 +90,7 @@ public class IRCompiler
 
                         case Code.Conv_I4:
                         case Code.Conv_I:
+                        case Code.Conv_U4:
                         case Code.Conv_U:
                             Pop(R1);
                             AddInstruction(And, _bitnessFlag | IRFlag.DestRegister | IRFlag.Immediate, R1, 0xFFFFFFFF);
