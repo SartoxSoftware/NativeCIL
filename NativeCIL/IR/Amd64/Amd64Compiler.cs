@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using static NativeCIL.IR.IROpCode;
 
 namespace NativeCIL.IR.Amd64;
@@ -154,16 +153,16 @@ public class Amd64Compiler : Compiler
                 case Ret: Builder.AppendLine("ret"); break;
             }
         }
-        
+
         File.WriteAllText(_asmPath, Builder.ToString());
-        Process.Start("yasm", $"-fbin {_asmPath} -o {_binPath}").WaitForExit();
+        Utils.StartSilent("yasm", $"-fbin {_asmPath} -o {_binPath}");
     }
 
     public override void Link()
     {
         // TODO: Replace objcopy and lld with a C# linker
-        Process.Start("objcopy", $"-Ibinary -Oelf64-x86-64 -Bi386 {_binPath} {_objPath}");
-        Process.Start("ld.lld", $"-melf_x86_64 -Tlinker.ld -o{OutputPath} {_objPath}").WaitForExit();
+        Utils.StartSilent("objcopy", $"-Ibinary -Oelf64-x86-64 -Bi386 {_binPath} {_objPath}");
+        Utils.StartSilent("ld.lld", $"-melf_x86_64 -Tlinker.ld -o{OutputPath} {_objPath}");
     }
 
     // On x86 at least, equal and zero mean the same thing (ZF = 1)

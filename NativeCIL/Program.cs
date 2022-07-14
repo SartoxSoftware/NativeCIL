@@ -16,12 +16,26 @@ Compiler compiler = settings.Architecture switch
 };
 
 watch.Start();
+
 ir.Compile();
+
+watch.Stop();
+Console.WriteLine($"Finished compiling to IR! Took {watch.ElapsedMilliseconds} ms.");
+watch.Restart();
 
 compiler.Initialize();
 compiler.Compile();
+
+watch.Stop();
+Console.WriteLine($"Finished compiling to native code! Took {watch.ElapsedMilliseconds} ms.");
+watch.Restart();
+
 if (settings.Format == Format.Elf)
     compiler.Link();
+
+watch.Stop();
+Console.WriteLine($"Finished linking! Took {watch.ElapsedMilliseconds} ms.");
+watch.Restart();
 
 if (settings.ImageType == ImageType.Iso)
 {
@@ -44,8 +58,8 @@ if (settings.ImageType == ImageType.Iso)
     iso.SetBootImage(cd, BootDeviceEmulation.NoEmulation, 0);
     iso.Build(settings.OutputFile);
 
-    Process.Start("Limine/limine-deploy", "--force-mbr " + settings.OutputFile).WaitForExit();
+    Utils.StartSilent("Limine/limine-deploy", "--force-mbr " + settings.OutputFile);
 }
 
 watch.Stop();
-Console.WriteLine($"Finished! Took {watch.ElapsedMilliseconds} ms.");
+Console.WriteLine($"Finished making the bootable image! Took {watch.ElapsedMilliseconds} ms.");
