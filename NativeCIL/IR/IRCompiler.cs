@@ -123,6 +123,13 @@ public class IRCompiler
                             AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer, PointerSize == 8 ? R2.Qword : R2.Dword, R1.Byte);
                             break;
 
+                        case Code.Stind_I2:
+                            // TODO of code generation, use R1.Qword
+                            Pop(R1); // Value
+                            Pop(R2); // Address
+                            AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer, PointerSize == 8 ? R2.Qword : R2.Dword, R1.Word);
+                            break;
+
                         case Code.Add:
                             Pop(R1);
                             Pop(R2);
