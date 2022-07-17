@@ -11,6 +11,7 @@ public class IRCompiler
 {
     private readonly ModuleDefMD _module;
     private readonly int _bitnessFlag;
+    private readonly StringBuilder _ldstr;
 
     public string AssemblyName => _module.Assembly.Name;
 
@@ -22,6 +23,7 @@ public class IRCompiler
     {
         _module = ModuleDefMD.Load(settings.InputFile);
         _bitnessFlag = settings.Architecture == TargetArchitecture.Amd64 ? IRFlag.Qword : IRFlag.Dword;
+        _ldstr = new();
         Settings = settings;
         PointerSize = settings.Architecture == TargetArchitecture.Amd64 ? 8 : 4;
         Instructions = new();
@@ -249,16 +251,16 @@ public class IRCompiler
                             var name = "LB_" + bytes.GetHashCode().ToString("X4");
                             var next = "LB_" + str.GetHashCode().ToString("X4");
 
-                            var text = new StringBuilder();
+                            _ldstr.Clear();
                             for (var i = 0; i < bytes.Length; i++)
-                                text.Append(bytes[i] + (i + 1 == bytes.Length ? string.Empty : ","));
+                                _ldstr.Append(bytes[i] + (i + 1 == bytes.Length ? string.Empty : ","));
 
                             AddInstruction(Mov, IRFlag.DestRegister | IRFlag.SrcPointer | IRFlag.Label | _bitnessFlag, R1, name);
                             AddInstruction(Add, IRFlag.DestRegister | IRFlag.Immediate | _bitnessFlag, R0, PointerSize);
                             AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer | _bitnessFlag, R0, R1);
                             AddInstruction(Jmp, IRFlag.Label, next);
                             AddInstruction(Label, -1, name);
-                            AddInstruction(Store, IRFlag.Byte, text.ToString());
+                            AddInstruction(Store, IRFlag.Byte, _ldstr.ToString());
                             AddInstruction(Label, -1, next);
                             break;
 
