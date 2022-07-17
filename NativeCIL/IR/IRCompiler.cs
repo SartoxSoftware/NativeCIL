@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.RegularExpressions;
 using dnlib.DotNet;
 using dnlib.DotNet.Emit;
@@ -167,6 +168,13 @@ public class IRCompiler
                             Push(R2);
                             break;
 
+                        case Code.And:
+                            Pop(R1);
+                            Pop(R2);
+                            AddInstruction(And, IRFlag.DestRegister | IRFlag.SrcRegister | _bitnessFlag, R2, R1);
+                            Push(R2);
+                            break;
+
                         case Code.Sub:
                             Pop(R1);
                             Pop(R2);
@@ -224,6 +232,25 @@ public class IRCompiler
                         case Code.Ldloc_3:
                             PopIndex(3, R1, R3);
                             Push(R1);
+                            break;
+
+                        case Code.Ldstr:
+                            var str = (string)inst.Operand;
+                            var bytes = Encoding.Unicode.GetBytes(str);
+                            var name = "LB_" + bytes.GetHashCode().ToString("X4");
+                            var next = "LB_" + str.GetHashCode().ToString("X4");
+
+                            var text = new StringBuilder();
+                            for (var i = 0; i < bytes.Length; i++)
+                                text.Append(bytes[i] + (i + 1 == bytes.Length ? string.Empty : ","));
+
+                            AddInstruction(Mov, IRFlag.DestRegister | IRFlag.SrcPointer | IRFlag.Label | _bitnessFlag, R1, name);
+                            AddInstruction(Add, IRFlag.DestRegister | IRFlag.Immediate | _bitnessFlag, R0, PointerSize);
+                            AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer | _bitnessFlag, R0, R1);
+                            AddInstruction(Jmp, IRFlag.Label, next);
+                            AddInstruction(Label, -1, name);
+                            AddInstruction(Store, IRFlag.Byte, text.ToString());
+                            AddInstruction(Label, -1, next);
                             break;
 
                         case Code.Ldloc_S:
@@ -357,7 +384,7 @@ public class IRCompiler
                             Pop(R1);
                             Pop(R2);
                             AddInstruction(Cmp, IRFlag.DestRegister | IRFlag.SrcRegister | _bitnessFlag, R2, R1);
-                            AddInstruction(Set, IRFlag.DestRegister | IRFlag.Equal, R2);
+                            AddInstruction(Set, IRFlag.DestRegister | IRFlag.Equal | IRFlag.Byte, R2);
                             Push(R2);
                             break;
 
@@ -368,6 +395,7 @@ public class IRCompiler
                                 Pop(R1);
                                 PushIndex(i - 1, R1, R4);
                             }
+
                             AddInstruction(Call, IRFlag.Label, GetSafeName(meth.FullName));
                             break;
 
@@ -425,7 +453,7 @@ public class IRCompiler
                 yield return br;
     }
 
-    private void AddInstruction(IROpCode opCode, int flags = 0, object? operand1 = null, object? operand2 = null) =>
+    private void AddInstruction(IROpCode opCode, int flags = -1, object? operand1 = null, object? operand2 = null) =>
         Instructions.Add(new IRInstruction(opCode, flags, operand1, operand2));
 
     private void PushIndex(int index, object obj, IRRegister reg) =>

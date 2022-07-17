@@ -1,4 +1,3 @@
-using System.Reflection;
 using static NativeCIL.IR.IROpCode;
 
 namespace NativeCIL.IR.Amd64;
@@ -140,6 +139,7 @@ public class Amd64Compiler : Compiler
                     if (inst.Operand2 != null)
                         Builder.AppendLine("dq " + inst.Operand2);
                     break;
+                case Store: Builder.AppendLine($"{GetStoreType(inst.Flags)} {inst.Operand1}"); break;
                 case Nop: break; // Common optimization
                 case Add: Builder.AppendLine($"add {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
                 case Sub: Builder.AppendLine($"sub {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
@@ -166,7 +166,7 @@ public class Amd64Compiler : Compiler
     {
         // TODO: Replace objcopy and lld with a C# linker
         Utils.StartSilent("objcopy", $"-Ibinary -Oelf64-x86-64 -Bi386 {_binPath} {_objPath}");
-        Utils.StartSilent("ld.lld", $"-melf_x86_64 -T{Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "linker.ld")} -o{OutputPath} {_objPath}");
+        Utils.StartSilent("ld.lld", $"-melf_x86_64 -T{Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "linker.ld")} -o{OutputPath} {_objPath}");
     }
 
     // On x86 at least, equal and zero mean the same thing (ZF = 1)
@@ -186,11 +186,28 @@ public class Amd64Compiler : Compiler
 
         if (HasFlag(ref flags, IRFlag.Greater))
             return "ja";
-        
+
         if (HasFlag(ref flags, IRFlag.LessOrEqual))
             return "jle";
 
         return "jmp";
+    }
+    
+    private static string GetStoreType(int flags)
+    {
+        if (HasFlag(ref flags, IRFlag.Byte))
+            return "db";
+
+        if (HasFlag(ref flags, IRFlag.Word))
+            return "dw";
+
+        if (HasFlag(ref flags, IRFlag.Dword))
+            return "dd";
+
+        if (HasFlag(ref flags, IRFlag.Qword))
+            return "dq";
+
+        throw new Exception("Invalid Store instruction!");
     }
 
     private static string GetSetType(int flags)

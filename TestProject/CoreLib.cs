@@ -19,5 +19,6 @@ public struct Char {}
 public struct Boolean {}
 public class Delegate {}
 public class Enum {}
+public class Attribute {}
 public abstract class ValueType {}
 public sealed class String { public readonly int Length; }

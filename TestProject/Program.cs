@@ -18,7 +18,7 @@ public static class Program
         Console.Write('l');
         Console.Write('d');
         Console.Write('!');
-        
+
         /*Setup.Initialize();
 
         long i8 = 5;
