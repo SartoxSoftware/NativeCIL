@@ -6,6 +6,19 @@ public static class Program
 {
     public static void Main(string[] _)
     {
+        Console.Write('H');
+        Console.Write('e');
+        Console.Write('l');
+        Console.Write('l');
+        Console.Write('o');
+        Console.Write(' ');
+        Console.Write('W');
+        Console.Write('o');
+        Console.Write('r');
+        Console.Write('l');
+        Console.Write('d');
+        Console.Write('!');
+        
         /*Setup.Initialize();
 
         long i8 = 5;
@@ -18,10 +31,8 @@ public static class Program
         idx *= 2;
         var test = (ulong)idx;
         var finalIndex = (int)test;
-        Cycle('A', 0xFF, finalIndex - 352);
-        for (;;);*/
+        Cycle('A', 0xFF, finalIndex - 352);*/
 
-        Console.Write('H');
         for (;;) ;
     }
 
