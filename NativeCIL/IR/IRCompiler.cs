@@ -35,6 +35,9 @@ public class IRCompiler
                 if (method.IsConstructor || method.IsStaticConstructor)
                     AddInstruction(Call, IRFlag.Label, GetSafeName(method.FullName));
 
+        // Jump to entry point
+        AddInstruction(Call, IRFlag.Label, GetSafeName(_module.EntryPoint.FullName));
+
         foreach (var type in _module.Types)
         {
             // Initialize static fields
