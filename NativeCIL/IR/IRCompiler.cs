@@ -10,7 +10,6 @@ public class IRCompiler
 {
     private readonly ModuleDefMD _module;
     private readonly int _bitnessFlag;
-    private int _stackIndex;
 
     public string AssemblyName => _module.Assembly.Name;
 
@@ -22,7 +21,6 @@ public class IRCompiler
     {
         _module = ModuleDefMD.Load(settings.InputFile);
         _bitnessFlag = settings.Architecture == TargetArchitecture.Amd64 ? IRFlag.Qword : IRFlag.Dword;
-        _stackIndex = 0;
         Settings = settings;
         PointerSize = settings.Architecture == TargetArchitecture.Amd64 ? 8 : 4;
         Instructions = new();
@@ -30,6 +28,18 @@ public class IRCompiler
 
     public void Compile()
     {
+        foreach (var type in _module.Types)
+        {
+            foreach (var method in type.Methods)
+            {
+                if (method.IsConstructor || method.IsStaticConstructor)
+                {
+                    AddInstruction(Call, IRFlag.Label, GetSafeName(method.FullName));
+                    continue;
+                }
+            }
+        }
+        
         foreach (var type in _module.Types)
         {
             // Initialize static fields
@@ -44,15 +54,6 @@ public class IRCompiler
             // Compile methods
             foreach (var method in type.Methods)
             {
-                if (method.IsConstructor)
-                    continue;
-
-                if (method.IsStaticConstructor)
-                {
-                    AddInstruction(Call, IRFlag.Label, GetSafeName(method.FullName));
-                    continue;
-                }
-
                 var branches = GetAllBranches(method).ToList();
                 AddInstruction(Label, -1, GetSafeName(method.FullName));
 
@@ -73,7 +74,7 @@ public class IRCompiler
 
                         case Code.Pop:
                             AddInstruction(Add, _bitnessFlag | IRFlag.DestRegister | IRFlag.Immediate, R0, PointerSize);
-                            _stackIndex -= PointerSize;
+                            //_stackIndex -= PointerSize;
                             break;
 
                         case Code.Ldc_I4_0: Push(0); break;
@@ -434,26 +435,23 @@ public class IRCompiler
         AddInstruction(Mov, IRFlag.SrcPointer | IRFlag.Label | IRFlag.DestRegister | _bitnessFlag, reg, str);
 
     private void Peek(IRRegister reg)
-        => AddInstruction(Mov, IRFlag.DestRegister | IRFlag.SrcRegister | IRFlag.SrcPointer | _bitnessFlag, reg, R0 + _stackIndex);
+        => AddInstruction(Mov, IRFlag.DestRegister | IRFlag.SrcRegister | IRFlag.SrcPointer | _bitnessFlag, reg, R0);
 
     private void Push(object imm)
     {
-        _stackIndex += PointerSize;
-        var index = _stackIndex;
-        AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer | _bitnessFlag | IRFlag.Immediate, R0 + index, imm);
+        AddInstruction(Add, IRFlag.DestRegister | IRFlag.Immediate | _bitnessFlag, R0, PointerSize);
+        AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer | _bitnessFlag | IRFlag.Immediate, R0, imm);
     }
 
     private void Push(IRRegister reg)
     {
-        _stackIndex += PointerSize;
-        var index = _stackIndex;
-        AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer | IRFlag.SrcRegister | _bitnessFlag, R0 + index, reg);
+        AddInstruction(Add, IRFlag.DestRegister | IRFlag.Immediate | _bitnessFlag, R0, PointerSize);
+        AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer | IRFlag.SrcRegister | _bitnessFlag, R0, reg);
     }
 
     private void Pop(IRRegister reg)
     {
-        var index = _stackIndex;
-        _stackIndex -= PointerSize;
-        AddInstruction(Mov, IRFlag.DestRegister | IRFlag.SrcRegister | IRFlag.SrcPointer | _bitnessFlag, reg, R0 + index);
+        AddInstruction(Mov, IRFlag.DestRegister | IRFlag.SrcRegister | IRFlag.SrcPointer | _bitnessFlag, reg, R0);
+        AddInstruction(Sub, IRFlag.DestRegister | IRFlag.Immediate | _bitnessFlag, R0, PointerSize);
     }
 }

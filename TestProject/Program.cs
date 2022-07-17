@@ -1,10 +1,12 @@
-﻿namespace TestProject;
+﻿using System;
+
+namespace TestProject;
 
 public static class Program
 {
     public static void Main(string[] _)
     {
-        Setup.Initialize();
+        /*Setup.Initialize();
 
         long i8 = 5;
         i8 += 2;
@@ -17,10 +19,13 @@ public static class Program
         var test = (ulong)idx;
         var finalIndex = (int)test;
         Cycle('A', 0xFF, finalIndex - 352);
-        for (;;);
+        for (;;);*/
+
+        Console.Write('H');
+        for (;;) ;
     }
 
-    private static void Cycle(char c, byte end, int index)
+    /*private static void Cycle(char c, byte end, int index)
     {
         unsafe
         {
@@ -32,5 +37,5 @@ public static class Program
                 *(byte*)Setup.VgaAddress++ = Setup.DefaultColor++;
             }
         }
-    }
+    }*/
 }
