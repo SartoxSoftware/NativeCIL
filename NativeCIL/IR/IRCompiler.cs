@@ -28,28 +28,18 @@ public class IRCompiler
 
     public void Compile()
     {
+        // Initialize static constructors
         foreach (var type in _module.Types)
-        {
             foreach (var method in type.Methods)
-            {
                 if (method.IsConstructor || method.IsStaticConstructor)
-                {
                     AddInstruction(Call, IRFlag.Label, GetSafeName(method.FullName));
-                    continue;
-                }
-            }
-        }
-        
+
         foreach (var type in _module.Types)
         {
             // Initialize static fields
             foreach (var field in type.Fields)
-            {
-                if (!field.IsStatic)
-                    continue;
-
-                AddInstruction(Label, _bitnessFlag, GetSafeName(field.FullName), field.HasConstant ? field.Constant.Value : 0);
-            }
+                if (field.IsStatic)
+                    AddInstruction(Label, _bitnessFlag, GetSafeName(field.FullName), field.HasConstant ? field.Constant.Value : 0);
 
             // Compile methods
             foreach (var method in type.Methods)
@@ -73,8 +63,7 @@ public class IRCompiler
                         case Code.Ret: AddInstruction(Ret); break;
 
                         case Code.Pop:
-                            AddInstruction(Add, _bitnessFlag | IRFlag.DestRegister | IRFlag.Immediate, R0, PointerSize);
-                            //_stackIndex -= PointerSize;
+                            AddInstruction(Sub, _bitnessFlag | IRFlag.DestRegister | IRFlag.Immediate, R0, PointerSize);
                             break;
 
                         case Code.Ldc_I4_0: Push(0); break;
