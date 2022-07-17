@@ -18,8 +18,8 @@ public static class Program
         Console.Write('l');
         Console.Write('d');
         Console.Write('!');
-
-        /*Setup.Initialize();
+        Console.Write('\r');
+        Console.Write('\n');
 
         long i8 = 5;
         i8 += 2;
@@ -31,22 +31,35 @@ public static class Program
         idx *= 2;
         var test = (ulong)idx;
         var finalIndex = (int)test;
-        Cycle('A', 0xFF, finalIndex - 352);*/
+        Cycle('A', 0xFF, finalIndex - 352);
 
         for (;;) ;
     }
 
-    /*private static void Cycle(char c, byte end, int index)
+    /// <summary>
+    /// Cycle through all characters and colors
+    /// </summary>
+    /// <param name="c">Start character</param>
+    /// <param name="end">End character</param>
+    /// <param name="index">Start index</param>
+    private static void Cycle(char c, byte end, int index)
     {
-        unsafe
+        var start = (byte)c;
+        var fore = true;
+        var back = false;
+        for (var i = index; i < end; i++)
         {
-            // Cycle through all characters and colors
-            var start = (byte)c;
-            for (var i = index; i < end; i++)
+            if (fore)
+                Console.ForeGround++;
+            if (back)
+                Console.BackGround++;
+            if (Console.ForeGround == ConsoleColor.White)
             {
-                *(byte*)Setup.VgaAddress++ = start++;
-                *(byte*)Setup.VgaAddress++ = Setup.DefaultColor++;
+                Console.ForeGround = 0;
+                fore = false;
+                back = true;
             }
+            Console.Write((char)start++);
         }
-    }*/
+    }
 }
