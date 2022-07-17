@@ -84,54 +84,60 @@ public class IRCompiler
                             Push(inst.Operand);
                             break;
 
-                        case Code.Conv_I4:
-                        case Code.Conv_I:
-                        case Code.Conv_U4:
-                        case Code.Conv_U:
-                            Pop(R1);
-                            AddInstruction(And, _bitnessFlag | IRFlag.DestRegister | IRFlag.Immediate, R1, 0xFFFFFFFF);
-                            Push(R1);
-                            break;
-
-                        case Code.Conv_U1:
                         case Code.Conv_I1:
+                        case Code.Conv_U1:
                             Pop(R1);
                             AddInstruction(And, _bitnessFlag | IRFlag.DestRegister | IRFlag.Immediate, R1, 0xFF);
                             Push(R1);
                             break;
 
-                        case Code.Conv_U2:
                         case Code.Conv_I2:
+                        case Code.Conv_U2:
                             Pop(R1);
                             AddInstruction(And, _bitnessFlag | IRFlag.DestRegister | IRFlag.Immediate, R1, 0xFFFF);
                             Push(R1);
                             break;
 
-                        case Code.Conv_U8:
-                        case Code.Conv_I8:
-                            // The value is already 64-bit, no need to convert.
+                        case Code.Conv_I4:
+                        case Code.Conv_I:
+                        case Code.Conv_U4:
+                        case Code.Conv_U:
+                            if (PointerSize == 8)
+                            {
+                                Pop(R1);
+                                AddInstruction(And, _bitnessFlag | IRFlag.DestRegister | IRFlag.Immediate, R1, 0xFFFFFFFF);
+                                Push(R1);
+                            }
                             break;
 
+                        case Code.Conv_I8:
+                        case Code.Conv_U8:
+                            // TODO: Is this right?
+                            if (PointerSize == 4)
+                            {
+                                Pop(R1);
+                                AddInstruction(And, _bitnessFlag | IRFlag.DestRegister | IRFlag.Immediate, R1, 0xFFFFFFFFFFFFFFFF);
+                                Push(R1);
+                            }
+                            break;
+
+                        // TODO of code generation (stind.i), use R1.Qword
                         case Code.Stind_I1:
-                            // TODO of code generation, use R1.Qword
                             Pop(R1); // Value
                             Pop(R2); // Address
                             AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer, PointerSize == 8 ? R2.Qword : R2.Dword, R1.Byte);
                             break;
                         case Code.Stind_I2:
-                            // TODO of code generation, use R1.Qword
                             Pop(R1); // Value
                             Pop(R2); // Address
                             AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer, PointerSize == 8 ? R2.Qword : R2.Dword, R1.Word);
                             break;
                         case Code.Stind_I4:
-                            // TODO of code generation, use R1.Qword
                             Pop(R1); // Value
                             Pop(R2); // Address
                             AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer, PointerSize == 8 ? R2.Qword : R2.Dword, R1.Dword);
                             break;
                         case Code.Stind_I8:
-                            // TODO of code generation, use R1.Qword
                             Pop(R1); // Value
                             Pop(R2); // Address
                             AddInstruction(Mov, IRFlag.DestRegister | IRFlag.DestPointer, PointerSize == 8 ? R2.Qword : R2.Dword, R1.Qword);
