@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Text;
 using DiscUtils.Iso9660;
 using NativeCIL;
+using NativeCIL.Base;
 using NativeCIL.IR;
 using NativeCIL.IR.Amd64;
 
@@ -13,7 +14,7 @@ var ir = new IRCompiler(ref settings);
 Compiler compiler = settings.Architecture switch
 {
     TargetArchitecture.Amd64 => new Amd64Compiler(ref ir),
-    _ => throw new Exception("i386 is not supported yet!")
+    _ => throw new Exception("Unsupported architecture!")
 };
 
 watch.Start();
@@ -32,11 +33,12 @@ Console.WriteLine($"Finished compiling to native code! Took {watch.ElapsedMillis
 watch.Restart();
 
 if (settings.Format == Format.Elf)
+{
     compiler.Link();
-
-watch.Stop();
-Console.WriteLine($"Finished linking! Took {watch.ElapsedMilliseconds} ms.");
-watch.Restart();
+    watch.Stop();
+    Console.WriteLine($"Finished linking! Took {watch.ElapsedMilliseconds} ms.");
+    watch.Restart();
+}
 
 if (settings.ImageType == ImageType.Iso)
 {

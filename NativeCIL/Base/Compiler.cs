@@ -1,7 +1,7 @@
 using System.Text;
 using NativeCIL.IR;
 
-namespace NativeCIL;
+namespace NativeCIL.Base;
 
 public abstract class Compiler
 {

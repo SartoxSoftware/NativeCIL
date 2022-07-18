@@ -22,10 +22,20 @@ public class IRCompiler
     public IRCompiler(ref Settings settings)
     {
         _module = ModuleDefMD.Load(settings.InputFile);
-        _bitnessFlag = settings.Architecture == TargetArchitecture.Amd64 ? IRFlag.Qword : IRFlag.Dword;
         _ldstr = new();
+
+        if (settings.Architecture == TargetArchitecture.Amd64)
+        {
+            _bitnessFlag = IRFlag.Qword;
+            PointerSize = 8;
+        }
+        else
+        {
+            _bitnessFlag = IRFlag.Dword;
+            PointerSize = 4;
+        }
+
         Settings = settings;
-        PointerSize = settings.Architecture == TargetArchitecture.Amd64 ? 8 : 4;
         Instructions = new();
     }
 

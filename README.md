@@ -3,8 +3,6 @@ NativeCIL is, as its name suggests, a CIL to native x86 compiler. It's a [CS2ASM
 
 # Dependencies
 - yasm
-- objcopy
-- lld
 
 # Usage
 ``NativeCIL --architecture <amd64> --format <bin,elf> --image <none,iso> --output <output> <input>``

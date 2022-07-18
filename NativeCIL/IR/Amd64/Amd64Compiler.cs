@@ -1,16 +1,17 @@
+using NativeCIL.Base;
+using NativeCIL.Linker;
 using static NativeCIL.IR.IROpCode;
 
 namespace NativeCIL.IR.Amd64;
 
 public class Amd64Compiler : Compiler
 {
-    private readonly string _asmPath, _binPath, _objPath;
+    private readonly string _asmPath, _binPath;
 
     public Amd64Compiler(ref IRCompiler compiler) : base(ref compiler)
     {
         _asmPath = Path.ChangeExtension(compiler.Settings.OutputFile, "asm");
         _binPath = Path.ChangeExtension(compiler.Settings.OutputFile, "bin");
-        _objPath = Path.ChangeExtension(compiler.Settings.OutputFile, "o");
         OutputPath = Path.ChangeExtension(compiler.Settings.OutputFile, "elf");
     }
 
@@ -22,6 +23,7 @@ public class Amd64Compiler : Compiler
 
             Builder.AppendLine("KERNEL_STACK equ 0x00200000");
 
+            // Thanks https://os.phil-opp.com/multiboot-kernel!
             Builder.AppendLine("dd 0xE85250D6"); // Magic
             Builder.AppendLine("dd 0"); // Architecture
             Builder.AppendLine("dd 16"); // Header length
@@ -164,9 +166,7 @@ public class Amd64Compiler : Compiler
 
     public override void Link()
     {
-        // TODO: Replace objcopy and lld with a C# linker
-        Utils.StartSilent("objcopy", $"-Ibinary -Oelf64-x86-64 -Bi386 {_binPath} {_objPath}");
-        Utils.StartSilent("ld.lld", $"-melf_x86_64 -T{Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "linker.ld")} -o{OutputPath} {_objPath}");
+        ELF.Link64(_binPath, OutputPath);
     }
 
     // On x86 at least, equal and zero mean the same thing (ZF = 1)
