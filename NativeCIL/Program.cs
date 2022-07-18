@@ -37,7 +37,6 @@ if (settings.Format == Format.Elf)
     compiler.Link();
     watch.Stop();
     Console.WriteLine($"Finished linking! Took {watch.ElapsedMilliseconds} ms.");
-    watch.Restart();
 }
 
 if (settings.ImageType == ImageType.Iso)
@@ -45,10 +44,11 @@ if (settings.ImageType == ImageType.Iso)
     if (settings.Format == Format.Bin)
         throw new Exception("Raw binaries cannot be used with Limine!");
 
+    watch.Restart();
+
     var path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
     using var cd = File.OpenRead(Path.Combine(path, "Limine/limine-cd.bin"));
     using var sys = File.OpenRead(Path.Combine(path, "Limine/limine.sys"));
-    using var kernel = File.OpenRead(compiler.OutputPath);
 
     var iso = new CDBuilder
     {
@@ -58,12 +58,14 @@ if (settings.ImageType == ImageType.Iso)
     };
     iso.AddFile("limine.sys", sys);
     iso.AddFile("limine.cfg", Encoding.ASCII.GetBytes($"TIMEOUT=0\n:{ir.AssemblyName}\nPROTOCOL=multiboot2\nKERNEL_PATH=boot:///kernel.elf"));
-    iso.AddFile("kernel.elf", kernel);
+    iso.AddFile("kernel.elf", compiler.OutputStream);
     iso.SetBootImage(cd, BootDeviceEmulation.NoEmulation, 0);
     iso.Build(settings.OutputFile);
 
     Utils.StartSilent("Limine/limine-deploy", "--force-mbr " + settings.OutputFile);
-}
 
-watch.Stop();
-Console.WriteLine($"Finished making the bootable image! Took {watch.ElapsedMilliseconds} ms.");
+    watch.Stop();
+    Console.WriteLine($"Finished making the bootable image! Took {watch.ElapsedMilliseconds} ms.");
+} else File.WriteAllBytes(settings.OutputFile, compiler.OutputStream.ToArray());
+
+compiler.OutputStream.Close();

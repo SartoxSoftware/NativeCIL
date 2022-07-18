@@ -34,11 +34,11 @@ public static unsafe class ELF
         public ulong Alignment;
     }
 
-    public static void Link64(string inputPath, string outputPath)
+    public static MemoryStream Link64(string inputPath, string outputPath)
     {
         var code = File.ReadAllBytes(inputPath);
         var length = (ulong)code.Length;
-        var bytes = new List<byte>();
+        var stream = new MemoryStream();
         var header = new Header64();
         var programHeader = new ProgramHeader64();
         var size = sizeof(Header64);
@@ -66,7 +66,7 @@ public static unsafe class ELF
         header.SectionHeaderEntries = 0; // None
         header.SectionHeaderStringTableIndex = 0; // None
 
-        bytes.AddRange(FromStruct(header));
+        stream.Write(FromStruct(header));
 
         programHeader.Type = 0x01; // Load
         programHeader.Flags = 0x00; // None
@@ -77,10 +77,10 @@ public static unsafe class ELF
         programHeader.MemorySize = length;
         programHeader.Alignment = 0x00; // None
 
-        bytes.AddRange(FromStruct(programHeader));
-        bytes.AddRange(code);
+        stream.Write(FromStruct(programHeader));
+        stream.Write(code);
 
-        File.WriteAllBytes(outputPath, bytes.ToArray());
+        return stream;
     }
 
     //https://stackoverflow.com/questions/3278827/how-to-convert-a-structure-to-a-byte-array-in-c#3278956

@@ -9,6 +9,7 @@ public abstract class Compiler
     protected readonly StringBuilder Builder;
 
     public string OutputPath;
+    public MemoryStream OutputStream;
 
     public Compiler(ref IRCompiler compiler)
     {

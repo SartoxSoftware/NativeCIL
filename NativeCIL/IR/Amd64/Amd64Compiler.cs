@@ -166,7 +166,7 @@ public class Amd64Compiler : Compiler
 
     public override void Link()
     {
-        ELF.Link64(_binPath, OutputPath);
+        OutputStream = ELF.Link64(_binPath, OutputPath);
     }
 
     // On x86 at least, equal and zero mean the same thing (ZF = 1)
