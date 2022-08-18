@@ -12,8 +12,8 @@ public static class Utils
             UseShellExecute = false,
             CreateNoWindow = true,
             WindowStyle = ProcessWindowStyle.Hidden,
-            RedirectStandardError = true,
+            /*RedirectStandardError = true,
             RedirectStandardInput = true,
-            RedirectStandardOutput = true
+            RedirectStandardOutput = true*/
         })?.WaitForExit();
 }

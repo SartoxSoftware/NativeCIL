@@ -148,7 +148,7 @@ public class Amd64Compiler : Compiler
                     Builder.AppendLine("jmp " + op);
                     break;
                 case Dup:
-                    Builder.AppendLine("push dword [rsp]");
+                    Builder.AppendLine("push qword [rsp]");
                     break;
                 case Label:
                     Builder.AppendLine(op + ":");
@@ -182,20 +182,20 @@ public class Amd64Compiler : Compiler
 
                 case Push:
                 {
-                    Builder.AppendLine("push " + (op is Register r ? $"dword [Register{r.Index}+{r.Value * 4}]" : op));
+                    Builder.AppendLine("push " + (op is Register r ? $"qword [Register{r.Index}+{r.Value * 8}]" : op));
                     break;
                 }
 
                 case Pop:
                 {
-                    Builder.AppendLine("pop " + (op is Register r ? $"dword [Register{r.Index}+{r.Value * 4}]" : op));
+                    Builder.AppendLine("pop " + (op is Register r ? $"qword [Register{r.Index}+{r.Value * 8}]" : op));
                     break;
                 }
 
                 case Mov:
                 {
                     var dest = op as Register;
-                    Builder.AppendLine($"mov dword [Register{dest.Index}+{dest.Value * 4}],{(src is Register r ? $"dword [Register{r.Index}+{r.Value * 4}]" : src)}");
+                    Builder.AppendLine($"mov qword [Register{dest.Index}+{dest.Value * 8}],{(src is Register r ? $"qword [Register{r.Index}+{r.Value * 8}]" : src)}");
                     break;
                 }
 
@@ -220,11 +220,11 @@ public class Amd64Compiler : Compiler
                 case Func:
                     calls++;
                     Builder.AppendLine(op + ":");
-                    Builder.AppendLine($"pop dword [Register3+{calls * 4}]");
+                    Builder.AppendLine($"pop qword [Register3+{calls * 8}]");
                     break;
 
                 case Ret:
-                    Builder.AppendLine($"push dword [Register3+{calls * 4}]");
+                    Builder.AppendLine($"push qword [Register3+{calls * 8}]");
                     Builder.AppendLine("ret");
                     break;
 
@@ -299,12 +299,12 @@ public class Amd64Compiler : Compiler
                 case Memstore:
                     Builder.AppendLine("pop rcx"); // Value
                     Builder.AppendLine("pop rdx"); // Address
-                    Builder.AppendLine("mov dword [rdx],rcx");
+                    Builder.AppendLine("mov qword [rdx],rcx");
                     break;
 
                 case Memload:
                     Builder.AppendLine("pop rdx"); // Address
-                    Builder.AppendLine("mov rcx,dword [rdx]");
+                    Builder.AppendLine("mov rcx,qword [rdx]");
                     Builder.AppendLine("push rcx");
                     break;
             }
