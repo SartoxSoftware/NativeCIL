@@ -8,5 +8,6 @@ public enum IROpCode
     Add, Sub, Mul, Or, Xor, And, Shl, Shr,
     Set,
     Mov,
+    In, Out,
     Cmp, Jmp, Call, Ret
 }

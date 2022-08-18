@@ -13,8 +13,7 @@ public class IRCompiler
     private readonly int _bitnessFlag;
     private readonly StringBuilder _ldstr;
 
-    public string AssemblyName => _module.Assembly.Name;
-
+    public readonly string AssemblyName;
     public readonly int PointerSize;
     public readonly Settings Settings;
     public readonly List<IRInstruction> Instructions;
@@ -35,6 +34,7 @@ public class IRCompiler
             PointerSize = 4;
         }
 
+        AssemblyName = GetSafeName(_module.Assembly.Name);
         Settings = settings;
         Instructions = new();
     }
@@ -60,9 +60,9 @@ public class IRCompiler
             // Compile methods
             foreach (var method in type.Methods)
             {
-                var branches = GetAllBranches(method).ToList();
                 AddInstruction(Label, -1, GetSafeName(method.FullName));
 
+                var branches = GetAllBranches(method).ToList();
                 foreach (var inst in method.Body.Instructions)
                 {
                     foreach (var branch in branches)

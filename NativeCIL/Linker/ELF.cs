@@ -33,8 +33,37 @@ public static unsafe class ELF
         public ulong MemorySize;
         public ulong Alignment;
     }
+    
+    private struct Header32
+    {
+        public fixed byte Identification[16];
+        public ushort Type;
+        public ushort Architecture;
+        public uint Version;
+        public uint EntryPoint;
+        public uint ProgramHeaderOffset;
+        public uint SectionHeaderOffset;
+        public uint Flags;
+        public ushort HeaderSize;
+        public ushort ProgramHeaderEntrySize;
+        public ushort ProgramHeaderEntries;
+        public ushort SectionHeaderEntrySize;
+        public ushort SectionHeaderEntries;
+        public ushort SectionHeaderStringTableIndex;
+    }
+    
+    private struct ProgramHeader32
+    {
+        public uint Type;
+        public uint Offset;
+        public uint VirtualAddress;
+        public uint PhysicalAddress;
+        public uint FileSize;
+        public uint MemorySize;
+        public uint Alignment;
+    }
 
-    public static MemoryStream Link64(string inputPath, string outputPath)
+    public static MemoryStream Link64(string inputPath)
     {
         var code = File.ReadAllBytes(inputPath);
         var length = (ulong)code.Length;
@@ -71,6 +100,54 @@ public static unsafe class ELF
         programHeader.Type = 0x01; // Load
         programHeader.Flags = 0x00; // None
         programHeader.Offset = (ulong)(size + sizeof(ProgramHeader64)); // Right after the program header
+        programHeader.VirtualAddress = 0x00; // None
+        programHeader.PhysicalAddress = 0x00; // None
+        programHeader.FileSize = length;
+        programHeader.MemorySize = length;
+        programHeader.Alignment = 0x00; // None
+
+        stream.Write(FromStruct(programHeader));
+        stream.Write(code);
+
+        return stream;
+    }
+    
+    public static MemoryStream Link32(string inputPath)
+    {
+        var code = File.ReadAllBytes(inputPath);
+        var length = (uint)code.Length;
+        var stream = new MemoryStream();
+        var header = new Header32();
+        var programHeader = new ProgramHeader32();
+        var size = sizeof(Header32);
+        
+        header.Identification[0] = 0x7F;
+        header.Identification[1] = 0x45; // E
+        header.Identification[2] = 0x4C; // L
+        header.Identification[3] = 0x46; // F
+        header.Identification[4] = 0x01; // File class, 32-bit
+        header.Identification[5] = 0x01; // Data encoding, little-endian (LSB)
+        header.Identification[6] = 0x01; // File version, current
+        header.Identification[7] = 0x00; // OS ABI, none
+        header.Identification[8] = 0x00; // ABI version, none
+        header.Type = 0x02; // Executable file
+        header.Architecture = 0x03; // i386
+        header.Version = 0x01; // Current
+        header.EntryPoint = 0x00; // None
+        header.ProgramHeaderOffset = (uint)size; // Right after the header
+        header.SectionHeaderOffset = 0x00; // None
+        header.Flags = 0x00; // None
+        header.HeaderSize = (ushort)size;
+        header.ProgramHeaderEntrySize = 0x38;
+        header.ProgramHeaderEntries = 0x01;
+        header.SectionHeaderEntrySize = 0; // None
+        header.SectionHeaderEntries = 0; // None
+        header.SectionHeaderStringTableIndex = 0; // None
+
+        stream.Write(FromStruct(header));
+
+        programHeader.Type = 0x01; // Load
+        programHeader.Offset = (uint)(size + sizeof(ProgramHeader32)); // Right after the program header
         programHeader.VirtualAddress = 0x00; // None
         programHeader.PhysicalAddress = 0x00; // None
         programHeader.FileSize = length;

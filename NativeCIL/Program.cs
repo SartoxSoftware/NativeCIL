@@ -46,9 +46,9 @@ if (settings.ImageType == ImageType.Iso)
 
     watch.Restart();
 
-    var path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-    using var cd = File.OpenRead(Path.Combine(path, "Limine/limine-cd.bin"));
-    using var sys = File.OpenRead(Path.Combine(path, "Limine/limine.sys"));
+    var assembly = Assembly.GetExecutingAssembly();
+    using var cd = assembly.GetManifestResourceStream("NativeCIL.limine-cd.bin");
+    using var sys = assembly.GetManifestResourceStream("NativeCIL.limine.sys");
 
     var iso = new CDBuilder
     {
@@ -62,7 +62,7 @@ if (settings.ImageType == ImageType.Iso)
     iso.SetBootImage(cd, BootDeviceEmulation.NoEmulation, 0);
     iso.Build(settings.OutputFile);
 
-    Utils.StartSilent("Limine/limine-deploy", "--force-mbr " + settings.OutputFile);
+    Utils.StartSilent("limine-deploy", "--force-mbr " + settings.OutputFile);
 
     watch.Stop();
     Console.WriteLine($"Finished making the bootable image! Took {watch.ElapsedMilliseconds} ms.");

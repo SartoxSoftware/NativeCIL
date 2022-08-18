@@ -153,6 +153,8 @@ public class Amd64Compiler : Compiler
                 case Shr: Builder.AppendLine($"shr {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
                 case Set: Builder.AppendLine($"{GetSetType(inst.Flags)} {MapObject(0, inst.Operand1, inst.Flags)}"); break;
                 case Mov: Builder.AppendLine($"mov {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
+                case In: Builder.AppendLine($"in {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
+                case Out: Builder.AppendLine($"out {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
                 case Cmp: Builder.AppendLine($"cmp {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
                 case Jmp: Builder.AppendLine($"{GetJumpType(inst.Flags)} {inst.Operand1}"); break;
                 case Call: Builder.AppendLine("call " + MapObject(0, inst.Operand1, inst.Flags)); break;
@@ -166,7 +168,7 @@ public class Amd64Compiler : Compiler
 
     public override void Link()
     {
-        OutputStream = ELF.Link64(_binPath, OutputPath);
+        OutputStream = ELF.Link64(_binPath);
     }
 
     // On x86 at least, equal and zero mean the same thing (ZF = 1)
