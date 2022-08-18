@@ -153,6 +153,9 @@ public class Amd64Compiler : Compiler
                 case Label:
                     Builder.AppendLine(op + ":");
                     break;
+                case Popd:
+                    Builder.AppendLine("add rsp,4");
+                    break;
 
                 case Jz:
                     Builder.AppendLine("pop rcx"); // Value

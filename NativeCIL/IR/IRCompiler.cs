@@ -71,6 +71,7 @@ public class IRCompiler
                         case Code.Nop: break;
                         case Code.Ret: Builder.Inst(Ret); break;
                         case Code.Dup: Builder.Inst(Dup); break;
+                        case Code.Pop: Builder.Inst(Popd); break;
 
                         case Code.Add: Builder.Inst(Add); break;
                         case Code.And: Builder.Inst(And); break;

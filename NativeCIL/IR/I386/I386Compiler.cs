@@ -58,6 +58,9 @@ public class I386Compiler : Compiler
                 case Label:
                     Builder.AppendLine(op + ":");
                     break;
+                case Popd:
+                    Builder.AppendLine("add esp,4");
+                    break;
 
                 case Jz:
                     Builder.AppendLine("pop ecx"); // Value
