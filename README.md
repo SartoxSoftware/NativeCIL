@@ -10,9 +10,9 @@ NativeCIL is, as its name suggests, a CIL to native x86 compiler. It's a [CS2ASM
 - dnlib (for reading the CIL instructions)
 
 # Usage
-``NativeCIL --architecture <amd64> --format <bin,elf> --image <none,iso> --output <output> <input>``
+``NativeCIL --architecture <i386,amd64> --format <bin,elf> --image <none,iso> --output <output> <input>``
 
-``NativeCIL -a<amd64> -f<bin,elf> -t<none,iso> -o<output> <input>``
+``NativeCIL -a<i386,amd64> -f<bin,elf> -t<none,iso> -o<output> <input>``
 
 For example:
 
