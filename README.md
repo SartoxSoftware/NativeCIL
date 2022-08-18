@@ -2,7 +2,12 @@
 NativeCIL is, as its name suggests, a CIL to native x86 compiler. It's a [CS2ASM](https://github.com/nifanfa/CS2ASM) rewrite, which is meant to be faster and more efficient and stable.
 
 # Dependencies
-- yasm
+## External
+- yasm (for assembling x86 code)
+
+## .NET
+- DiscUtils (for making the bootable image)
+- dnlib (for reading the CIL instructions)
 
 # Usage
 ``NativeCIL --architecture <amd64> --format <bin,elf> --image <none,iso> --output <output> <input>``
