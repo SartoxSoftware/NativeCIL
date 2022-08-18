@@ -319,6 +319,6 @@ public class Amd64Compiler : Compiler
 
     public override void Link()
     {
-        OutputStream = ELF.Link32(_binPath);
+        OutputStream = ELF.Link64(_binPath);
     }
 }
