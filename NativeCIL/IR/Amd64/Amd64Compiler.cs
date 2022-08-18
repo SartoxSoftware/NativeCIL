@@ -1,6 +1,6 @@
 using NativeCIL.Base;
 using NativeCIL.Linker;
-using static NativeCIL.IR.IROpCode;
+using static NativeCIL.IR.OpCode;
 
 namespace NativeCIL.IR.Amd64;
 
@@ -33,7 +33,6 @@ public class Amd64Compiler : Compiler
             Builder.AppendLine("dw 0");
             Builder.AppendLine("dd 8");
 
-            Builder.AppendLine("_start:");
             Builder.AppendLine("mov esp,KERNEL_STACK");
             Builder.AppendLine("push 0");
             Builder.AppendLine("popf");
@@ -131,34 +130,183 @@ public class Amd64Compiler : Compiler
 
     public override void Compile()
     {
-        foreach (var inst in IRCompiler.Instructions)
+        // Create virtual registers
+        for (var i = 0; i < 4; i++)
         {
-            switch (inst.OpCode)
+            Builder.Append($"Register{i}:dq 0");
+            for (var j = 0; j < 29; j++)
+                Builder.Append(",0");
+            Builder.AppendLine();
+        }
+
+        var calls = 0;
+        foreach (var (opCode, op, src) in IRCompiler.Builder.Instructions)
+        {
+            switch (opCode)
             {
-                case Comment: Builder.AppendLine(";" + inst.Operand1); break;
-                case Label:
-                    Builder.AppendLine(inst.Operand1 + ":");
-                    if (inst.Operand2 != null)
-                        Builder.AppendLine("dq " + inst.Operand2);
+                case Jmp:
+                    Builder.AppendLine("jmp " + op);
                     break;
-                case Store: Builder.AppendLine($"{GetStoreType(inst.Flags)} {inst.Operand1}"); break;
-                case Nop: break; // Common optimization
-                case Add: Builder.AppendLine($"add {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
-                case Sub: Builder.AppendLine($"sub {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
-                case Mul: Builder.AppendLine($"imul {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
-                case Or: Builder.AppendLine($"or {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
-                case Xor: Builder.AppendLine($"xor {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
-                case And: Builder.AppendLine($"and {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
-                case Shl: Builder.AppendLine($"shl {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
-                case Shr: Builder.AppendLine($"shr {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
-                case Set: Builder.AppendLine($"{GetSetType(inst.Flags)} {MapObject(0, inst.Operand1, inst.Flags)}"); break;
-                case Mov: Builder.AppendLine($"mov {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
-                case In: Builder.AppendLine($"in {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
-                case Out: Builder.AppendLine($"out {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
-                case Cmp: Builder.AppendLine($"cmp {MapObject(0, inst.Operand1, inst.Flags)},{MapObject(1, inst.Operand2, inst.Flags)}"); break;
-                case Jmp: Builder.AppendLine($"{GetJumpType(inst.Flags)} {inst.Operand1}"); break;
-                case Call: Builder.AppendLine("call " + MapObject(0, inst.Operand1, inst.Flags)); break;
-                case Ret: Builder.AppendLine("ret"); break;
+                case Dup:
+                    Builder.AppendLine("push dword [rsp]");
+                    break;
+                case Label:
+                    Builder.AppendLine(op + ":");
+                    break;
+
+                case Jz:
+                    Builder.AppendLine("pop rcx"); // Value
+                    Builder.AppendLine("cmp rcx,0");
+                    Builder.AppendLine("jz " + op);
+                    break;
+
+                case Jnz:
+                    Builder.AppendLine("pop rcx"); // Value
+                    Builder.AppendLine("cmp rcx,0");
+                    Builder.AppendLine("jnz " + op);
+                    break;
+
+                case Jb:
+                    Builder.AppendLine("pop rcx"); // Value 2
+                    Builder.AppendLine("pop rdx"); // Value 1
+                    Builder.AppendLine("cmp rdx,rcx");
+                    Builder.AppendLine("jb " + op);
+                    break;
+
+                case Jne:
+                    Builder.AppendLine("pop rcx"); // Value 2
+                    Builder.AppendLine("pop rdx"); // Value 1
+                    Builder.AppendLine("cmp rdx,rcx");
+                    Builder.AppendLine("jne " + op);
+                    break;
+
+                case Push:
+                {
+                    Builder.AppendLine("push " + (op is Register r ? $"dword [Register{r.Index}+{r.Value * 4}]" : op));
+                    break;
+                }
+
+                case Pop:
+                {
+                    Builder.AppendLine("pop " + (op is Register r ? $"dword [Register{r.Index}+{r.Value * 4}]" : op));
+                    break;
+                }
+
+                case Mov:
+                {
+                    var dest = op as Register;
+                    Builder.AppendLine($"mov dword [Register{dest.Index}+{dest.Value * 4}],{(src is Register r ? $"dword [Register{r.Index}+{r.Value * 4}]" : src)}");
+                    break;
+                }
+
+                case Pushl:
+                    Builder.AppendLine("xor rax,rax");
+                    Builder.AppendLine("pop rcx"); // Value 2
+                    Builder.AppendLine("pop rdx"); // Value 1
+                    Builder.AppendLine("cmp rdx,rcx");
+                    Builder.AppendLine("setl al");
+                    Builder.AppendLine("push rax");
+                    break;
+
+                case Pushe:
+                    Builder.AppendLine("xor rax,rax");
+                    Builder.AppendLine("pop rcx"); // Value 2
+                    Builder.AppendLine("pop rdx"); // Value 1
+                    Builder.AppendLine("cmp rdx,rcx");
+                    Builder.AppendLine("sete al");
+                    Builder.AppendLine("push rax");
+                    break;
+
+                case Func:
+                    calls++;
+                    Builder.AppendLine(op + ":");
+                    Builder.AppendLine($"pop dword [Register3+{calls * 4}]");
+                    break;
+
+                case Ret:
+                    Builder.AppendLine($"push dword [Register3+{calls * 4}]");
+                    Builder.AppendLine("ret");
+                    break;
+
+                case Call:
+                    Builder.AppendLine("call " + op);
+                    break;
+
+                case Add:
+                    Builder.AppendLine("pop rcx"); // Value 2
+                    Builder.AppendLine("pop rdx"); // Value 1
+                    Builder.AppendLine("add rdx,rcx");
+                    Builder.AppendLine("push rdx");
+                    break;
+
+                case And:
+                    Builder.AppendLine("pop rcx"); // Value 2
+                    Builder.AppendLine("pop rdx"); // Value 1
+                    Builder.AppendLine("and rdx,rcx");
+                    Builder.AppendLine("push rdx");
+                    break;
+
+                case Sub:
+                    Builder.AppendLine("pop rcx"); // Value 2
+                    Builder.AppendLine("pop rdx"); // Value 1
+                    Builder.AppendLine("sub rdx,rcx");
+                    Builder.AppendLine("push rdx");
+                    break;
+
+                case Mul:
+                    Builder.AppendLine("pop rcx"); // Value 2
+                    Builder.AppendLine("pop rdx"); // Value 1
+                    Builder.AppendLine("imul rdx,rcx");
+                    Builder.AppendLine("push rdx");
+                    break;
+
+                case Div:
+                    Builder.AppendLine("xor rdx,rdx");
+                    Builder.AppendLine("pop rcx"); // Value 2
+                    Builder.AppendLine("pop rax"); // Value 1
+                    Builder.AppendLine("idiv rcx");
+                    Builder.AppendLine("push rax");
+                    break;
+
+                case Or:
+                    Builder.AppendLine("pop rcx"); // Value 2
+                    Builder.AppendLine("pop rdx"); // Value 1
+                    Builder.AppendLine("or rdx,rcx");
+                    Builder.AppendLine("push rdx");
+                    break;
+
+                case Xor:
+                    Builder.AppendLine("pop rcx"); // Value 2
+                    Builder.AppendLine("pop rdx"); // Value 1
+                    Builder.AppendLine("xor rdx,rcx");
+                    Builder.AppendLine("push rdx");
+                    break;
+
+                case Shl:
+                    Builder.AppendLine("pop rcx"); // Value 2
+                    Builder.AppendLine("pop rdx"); // Value 1
+                    Builder.AppendLine("shl rdx,cl");
+                    Builder.AppendLine("push rdx");
+                    break;
+
+                case Shr:
+                    Builder.AppendLine("pop rcx"); // Value 2
+                    Builder.AppendLine("pop rdx"); // Value 1
+                    Builder.AppendLine("shr rdx,cl");
+                    Builder.AppendLine("push rdx");
+                    break;
+
+                case Memstore:
+                    Builder.AppendLine("pop rcx"); // Value
+                    Builder.AppendLine("pop rdx"); // Address
+                    Builder.AppendLine("mov dword [rdx],rcx");
+                    break;
+
+                case Memload:
+                    Builder.AppendLine("pop rdx"); // Address
+                    Builder.AppendLine("mov rcx,dword [rdx]");
+                    Builder.AppendLine("push rcx");
+                    break;
             }
         }
 
@@ -168,164 +316,6 @@ public class Amd64Compiler : Compiler
 
     public override void Link()
     {
-        OutputStream = ELF.Link64(_binPath);
-    }
-
-    // On x86 at least, equal and zero mean the same thing (ZF = 1)
-    private static string GetJumpType(int flags)
-    {
-        if (HasFlag(ref flags, IRFlag.Zero) || HasFlag(ref flags, IRFlag.Equal))
-            return "jz";
-
-        if (HasFlag(ref flags, IRFlag.NotZero) || HasFlag(ref flags, IRFlag.NotEqual))
-            return "jnz";
-
-        if (HasFlag(ref flags, IRFlag.Less))
-            return "jb";
-
-        if (HasFlag(ref flags, IRFlag.GreaterOrEqual))
-            return "jae";
-
-        if (HasFlag(ref flags, IRFlag.Greater))
-            return "ja";
-
-        if (HasFlag(ref flags, IRFlag.LessOrEqual))
-            return "jle";
-
-        return "jmp";
-    }
-    
-    private static string GetStoreType(int flags)
-    {
-        if (HasFlag(ref flags, IRFlag.Byte))
-            return "db";
-
-        if (HasFlag(ref flags, IRFlag.Word))
-            return "dw";
-
-        if (HasFlag(ref flags, IRFlag.Dword))
-            return "dd";
-
-        if (HasFlag(ref flags, IRFlag.Qword))
-            return "dq";
-
-        throw new Exception("Invalid Store instruction!");
-    }
-
-    private static string GetSetType(int flags)
-    {
-        if (HasFlag(ref flags, IRFlag.Less))
-            return "setl";
-
-        if (HasFlag(ref flags, IRFlag.Greater))
-            return "setg";
-
-        if (HasFlag(ref flags, IRFlag.Zero) || HasFlag(ref flags, IRFlag.Equal))
-            return "setz";
-
-        if (HasFlag(ref flags, IRFlag.NotZero) || HasFlag(ref flags, IRFlag.NotEqual))
-            return "setnz";
-
-        throw new Exception("Unknown or unsupported set type found!");
-    }
-
-    // I know this code is terrible, please be kind :D
-    private static string? MapObject(byte op, object? operand, int flags)
-    {
-        var dstReg = HasFlag(ref flags, IRFlag.DestRegister);
-        var srcReg = HasFlag(ref flags, IRFlag.SrcRegister);
-        var imm = HasFlag(ref flags, IRFlag.Immediate);
-        var label = HasFlag(ref flags, IRFlag.Label);
-        var dstPtr = HasFlag(ref flags, IRFlag.DestPointer);
-        var srcPtr = HasFlag(ref flags, IRFlag.SrcPointer);
-
-        if ((!dstReg && !srcReg) || (op == 1 && imm))
-            return operand?.ToString();
-
-        var isByte = HasFlag(ref flags, IRFlag.Byte);
-        var word = HasFlag(ref flags, IRFlag.Word);
-        var dword = HasFlag(ref flags, IRFlag.Dword);
-        var qword = HasFlag(ref flags, IRFlag.Qword);
-
-        var reg = operand as IRRegister;
-        string? str;
-
-        if (operand is not string)
-        {
-            str = reg?.Value switch
-            {
-                0 => "bp",
-                1 => "ax",
-                2 => "bx",
-                3 => "8",
-                4 => "dx",
-                5 => "cx",
-                _ => string.Empty
-            };
-
-            if (isByte || reg?.ExplicitType == 1)
-                str = str[0] + "l";
-            else if (dword || reg?.ExplicitType == 3)
-                str = "e" + str;
-            else if (qword || reg?.ExplicitType == 4)
-                str = "r" + str;
-
-            // TODO: Improve code generation by using the high registers of AMD64
-            /*str = "r" + (reg?.Value + 8);
-
-            if (isByte || reg?.ExplicitType == 1)
-                str = reg?.Value switch
-                {
-                    0 => "ah",
-                    1 => "al",
-                    2 => "cl",
-                    3 => "dl",
-                    4 => "bl",
-                    _ => string.Empty
-                };
-            else if (word || reg?.ExplicitType == 2)
-                str = reg?.Value switch
-                {
-                    0 => "bp",
-                    1 => "ax",
-                    2 => "cx",
-                    3 => "dx",
-                    4 => "bx",
-                    _ => string.Empty
-                };
-            else if (dword || reg?.ExplicitType == 3)
-                str = reg?.Value switch
-                {
-                    0 => "ebp",
-                    1 => "eax",
-                    2 => "ecx",
-                    3 => "edx",
-                    4 => "ebx",
-                    _ => string.Empty
-                };
-            else if (reg?.ExplicitType == 4)
-                str = reg?.Value switch
-                {
-                    0 => "rbp",
-                    1 => "rax",
-                    2 => "rcx",
-                    3 => "rdx",
-                    4 => "rbx",
-                    _ => string.Empty
-                };*/
-        }
-        else str = operand.ToString();
-
-        if (reg?.Offset > 0)
-            str += "+" + reg.Offset;
-
-        if ((op != 0 || !dstPtr) && (op != 1 || !srcPtr))
-            return str;
-
-        str = $"[{str}]";
-        if (qword && !label)
-            str = "qword " + str;
-
-        return str;
+        OutputStream = ELF.Link32(_binPath);
     }
 }
