@@ -191,7 +191,10 @@ public class Amd64Compiler : Compiler
 
                 case Pop:
                 {
-                    Builder.AppendLine("pop " + (op is Register r ? $"qword [Register{r.Index}+{r.Value * 8}]" : op));
+                    if (op is not Register r)
+                        throw new Exception("What the fuck are you trying to do? Pop to an immediate value????");
+                    
+                    Builder.AppendLine($"pop qword [Register{r.Index}+{r.Value * 8}]");
                     break;
                 }
 
@@ -236,23 +239,47 @@ public class Amd64Compiler : Compiler
                     break;
 
                 case Add:
-                    Builder.AppendLine("pop rcx"); // Value 2
-                    Builder.AppendLine("pop rdx"); // Value 1
-                    Builder.AppendLine("add rdx,rcx");
+                    if (op is null && src is null)
+                    {
+                        Builder.AppendLine("pop rcx"); // Value 2
+                        Builder.AppendLine("pop rdx"); // Value 1
+                        Builder.AppendLine("add rdx,rcx");
+                    }
+                    else if (op is not null && src is null)
+                    {
+                        Builder.AppendLine("pop rdx"); // Value 1
+                        Builder.AppendLine("add rdx," + op);
+                    }
                     Builder.AppendLine("push rdx");
                     break;
 
                 case And:
-                    Builder.AppendLine("pop rcx"); // Value 2
-                    Builder.AppendLine("pop rdx"); // Value 1
-                    Builder.AppendLine("and rdx,rcx");
+                    if (op is null && src is null)
+                    {
+                        Builder.AppendLine("pop rcx"); // Value 2
+                        Builder.AppendLine("pop rdx"); // Value 1
+                        Builder.AppendLine("and rdx,rcx");
+                    }
+                    else if (op is not null && src is null)
+                    {
+                        Builder.AppendLine("pop rdx"); // Value 1
+                        Builder.AppendLine("and rdx," + op);
+                    }
                     Builder.AppendLine("push rdx");
                     break;
 
                 case Sub:
-                    Builder.AppendLine("pop rcx"); // Value 2
-                    Builder.AppendLine("pop rdx"); // Value 1
-                    Builder.AppendLine("sub rdx,rcx");
+                    if (op is null && src is null)
+                    {
+                        Builder.AppendLine("pop rcx"); // Value 2
+                        Builder.AppendLine("pop rdx"); // Value 1
+                        Builder.AppendLine("sub rdx,rcx");
+                    }
+                    else if (op is not null && src is null)
+                    {
+                        Builder.AppendLine("pop rdx"); // Value 1
+                        Builder.AppendLine("sub rdx," + op);
+                    }
                     Builder.AppendLine("push rdx");
                     break;
 
@@ -272,30 +299,62 @@ public class Amd64Compiler : Compiler
                     break;
 
                 case Or:
-                    Builder.AppendLine("pop rcx"); // Value 2
-                    Builder.AppendLine("pop rdx"); // Value 1
-                    Builder.AppendLine("or rdx,rcx");
+                    if (op is null && src is null)
+                    {
+                        Builder.AppendLine("pop rcx"); // Value 2
+                        Builder.AppendLine("pop rdx"); // Value 1
+                        Builder.AppendLine("or rdx,rcx");
+                    }
+                    else if (op is not null && src is null)
+                    {
+                        Builder.AppendLine("pop rdx"); // Value 1
+                        Builder.AppendLine("or rdx," + op);
+                    }
                     Builder.AppendLine("push rdx");
                     break;
 
                 case Xor:
-                    Builder.AppendLine("pop rcx"); // Value 2
-                    Builder.AppendLine("pop rdx"); // Value 1
-                    Builder.AppendLine("xor rdx,rcx");
+                    if (op is null && src is null)
+                    {
+                        Builder.AppendLine("pop rcx"); // Value 2
+                        Builder.AppendLine("pop rdx"); // Value 1
+                        Builder.AppendLine("xor rdx,rcx");
+                    }
+                    else if (op is not null && src is null)
+                    {
+                        Builder.AppendLine("pop rdx"); // Value 1
+                        Builder.AppendLine("xor rdx," + op);
+                    }
                     Builder.AppendLine("push rdx");
                     break;
 
                 case Shl:
-                    Builder.AppendLine("pop rcx"); // Value 2
-                    Builder.AppendLine("pop rdx"); // Value 1
-                    Builder.AppendLine("shl rdx,cl");
+                    if (op is null && src is null)
+                    {
+                        Builder.AppendLine("pop rcx"); // Value 2
+                        Builder.AppendLine("pop rdx"); // Value 1
+                        Builder.AppendLine("shl rdx,cl");
+                    }
+                    else if (op is not null && src is null)
+                    {
+                        Builder.AppendLine("pop rdx"); // Value 1
+                        Builder.AppendLine("shl rdx," + op);
+                    }
                     Builder.AppendLine("push rdx");
                     break;
 
                 case Shr:
-                    Builder.AppendLine("pop rcx"); // Value 2
-                    Builder.AppendLine("pop rdx"); // Value 1
-                    Builder.AppendLine("shr rdx,cl");
+                    if (op is null && src is null)
+                    {
+                        Builder.AppendLine("pop rcx"); // Value 2
+                        Builder.AppendLine("pop rdx"); // Value 1
+                        Builder.AppendLine("shr rdx,cl");
+                    }
+                    else if (op is not null && src is null)
+                    {
+                        Builder.AppendLine("pop rdx"); // Value 1
+                        Builder.AppendLine("shr rdx," + op);
+                    }
                     Builder.AppendLine("push rdx");
                     break;
 

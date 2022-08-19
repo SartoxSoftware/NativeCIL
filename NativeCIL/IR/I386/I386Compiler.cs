@@ -96,7 +96,10 @@ public class I386Compiler : Compiler
 
                 case Pop:
                 {
-                    Builder.AppendLine("pop " + (op is Register r ? $"dword [Register{r.Index}+{r.Value * 4}]" : op));
+                    if (op is not Register r)
+                        throw new Exception("What the fuck are you trying to do? Pop to an immediate value????");
+                    
+                    Builder.AppendLine($"pop dword [Register{r.Index}+{r.Value * 4}]");
                     break;
                 }
 
@@ -141,23 +144,47 @@ public class I386Compiler : Compiler
                     break;
 
                 case Add:
-                    Builder.AppendLine("pop ecx"); // Value 2
-                    Builder.AppendLine("pop edx"); // Value 1
-                    Builder.AppendLine("add edx,ecx");
+                    if (op is null && src is null)
+                    {
+                        Builder.AppendLine("pop ecx"); // Value 2
+                        Builder.AppendLine("pop edx"); // Value 1
+                        Builder.AppendLine("add edx,ecx");
+                    }
+                    else if (op is not null && src is null)
+                    {
+                        Builder.AppendLine("pop edx"); // Value 1
+                        Builder.AppendLine("add edx," + op);
+                    }
                     Builder.AppendLine("push edx");
                     break;
 
                 case And:
-                    Builder.AppendLine("pop ecx"); // Value 2
-                    Builder.AppendLine("pop edx"); // Value 1
-                    Builder.AppendLine("and edx,ecx");
+                    if (op is null && src is null)
+                    {
+                        Builder.AppendLine("pop ecx"); // Value 2
+                        Builder.AppendLine("pop edx"); // Value 1
+                        Builder.AppendLine("and edx,ecx");
+                    }
+                    else if (op is not null && src is null)
+                    {
+                        Builder.AppendLine("pop edx"); // Value 1
+                        Builder.AppendLine("and edx," + op);
+                    }
                     Builder.AppendLine("push edx");
                     break;
 
                 case Sub:
-                    Builder.AppendLine("pop ecx"); // Value 2
-                    Builder.AppendLine("pop edx"); // Value 1
-                    Builder.AppendLine("sub edx,ecx");
+                    if (op is null && src is null)
+                    {
+                        Builder.AppendLine("pop ecx"); // Value 2
+                        Builder.AppendLine("pop edx"); // Value 1
+                        Builder.AppendLine("sub edx,ecx");
+                    }
+                    else if (op is not null && src is null)
+                    {
+                        Builder.AppendLine("pop edx"); // Value 1
+                        Builder.AppendLine("sub edx," + op);
+                    }
                     Builder.AppendLine("push edx");
                     break;
 
@@ -177,30 +204,62 @@ public class I386Compiler : Compiler
                     break;
 
                 case Or:
-                    Builder.AppendLine("pop ecx"); // Value 2
-                    Builder.AppendLine("pop edx"); // Value 1
-                    Builder.AppendLine("or edx,ecx");
+                    if (op is null && src is null)
+                    {
+                        Builder.AppendLine("pop ecx"); // Value 2
+                        Builder.AppendLine("pop edx"); // Value 1
+                        Builder.AppendLine("or edx,ecx");
+                    }
+                    else if (op is not null && src is null)
+                    {
+                        Builder.AppendLine("pop edx"); // Value 1
+                        Builder.AppendLine("or edx," + op);
+                    }
                     Builder.AppendLine("push edx");
                     break;
 
                 case Xor:
-                    Builder.AppendLine("pop ecx"); // Value 2
-                    Builder.AppendLine("pop edx"); // Value 1
-                    Builder.AppendLine("xor edx,ecx");
+                    if (op is null && src is null)
+                    {
+                        Builder.AppendLine("pop ecx"); // Value 2
+                        Builder.AppendLine("pop edx"); // Value 1
+                        Builder.AppendLine("xor edx,ecx");
+                    }
+                    else if (op is not null && src is null)
+                    {
+                        Builder.AppendLine("pop edx"); // Value 1
+                        Builder.AppendLine("xor edx," + op);
+                    }
                     Builder.AppendLine("push edx");
                     break;
 
                 case Shl:
-                    Builder.AppendLine("pop ecx"); // Value 2
-                    Builder.AppendLine("pop edx"); // Value 1
-                    Builder.AppendLine("shl edx,cl");
+                    if (op is null && src is null)
+                    {
+                        Builder.AppendLine("pop ecx"); // Value 2
+                        Builder.AppendLine("pop edx"); // Value 1
+                        Builder.AppendLine("shl edx,cl");
+                    }
+                    else if (op is not null && src is null)
+                    {
+                        Builder.AppendLine("pop edx"); // Value 1
+                        Builder.AppendLine("shl edx," + op);
+                    }
                     Builder.AppendLine("push edx");
                     break;
 
                 case Shr:
-                    Builder.AppendLine("pop ecx"); // Value 2
-                    Builder.AppendLine("pop edx"); // Value 1
-                    Builder.AppendLine("shr edx,cl");
+                    if (op is null && src is null)
+                    {
+                        Builder.AppendLine("pop ecx"); // Value 2
+                        Builder.AppendLine("pop edx"); // Value 1
+                        Builder.AppendLine("shr edx,cl");
+                    }
+                    else if (op is not null && src is null)
+                    {
+                        Builder.AppendLine("pop edx"); // Value 1
+                        Builder.AppendLine("shr edx," + op);
+                    }
                     Builder.AppendLine("push edx");
                     break;
 

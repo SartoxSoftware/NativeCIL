@@ -173,26 +173,22 @@ public class IRCompiler
                         case Code.Conv_I:
                         case Code.Conv_U4:
                         case Code.Conv_U:
-                            Builder.Inst(Push, 0xFFFFFFFF);
-                            Builder.Inst(And);
+                            Builder.Inst(And, 0xFFFFFFFF);
                             break;
 
                         case Code.Conv_I1:
                         case Code.Conv_U1:
-                            Builder.Inst(Push, 0xFF);
-                            Builder.Inst(And);
+                            Builder.Inst(And, 0xFF);
                             break;
 
                         case Code.Conv_I2:
                         case Code.Conv_U2:
-                            Builder.Inst(Push, 0xFFFF);
-                            Builder.Inst(And);
+                            Builder.Inst(And, 0xFFFF);
                             break;
 
                         case Code.Conv_I8:
                         case Code.Conv_U8:
-                            Builder.Inst(Push, 0xFFFFFFFFFFFFFFFF);
-                            Builder.Inst(And);
+                            Builder.Inst(And, 0xFFFFFFFFFFFFFFF);
                             break;
 
                         case Code.Stind_I1:
