@@ -140,13 +140,10 @@ public class Amd64Compiler : Compiler
         }
 
         var calls = 0;
-        foreach (var (opCode, op, src) in IRCompiler.Builder.Instructions)
+        foreach (var (opCode, op, src, condition) in IRCompiler.Builder.Instructions)
         {
             switch (opCode)
             {
-                case Jmp:
-                    Builder.AppendLine("jmp " + op);
-                    break;
                 case Dup:
                     Builder.AppendLine("push qword [rsp]");
                     break;
@@ -156,38 +153,103 @@ public class Amd64Compiler : Compiler
                 case Popd:
                     Builder.AppendLine("add rsp,4");
                     break;
-
-                case Jz:
-                    Builder.AppendLine("pop rcx"); // Value
-                    Builder.AppendLine("cmp rcx,0");
-                    Builder.AppendLine("jz " + op);
-                    break;
-
-                case Jnz:
-                    Builder.AppendLine("pop rcx"); // Value
-                    Builder.AppendLine("cmp rcx,0");
-                    Builder.AppendLine("jnz " + op);
-                    break;
-
-                case Jb:
-                    Builder.AppendLine("pop rcx"); // Value 2
-                    Builder.AppendLine("pop rdx"); // Value 1
-                    Builder.AppendLine("cmp rdx,rcx");
-                    Builder.AppendLine("jb " + op);
-                    break;
-
-                case Jne:
-                    Builder.AppendLine("pop rcx"); // Value 2
-                    Builder.AppendLine("pop rdx"); // Value 1
-                    Builder.AppendLine("cmp rdx,rcx");
-                    Builder.AppendLine("jne " + op);
+                
+                case Jmp:
+                    switch (condition)
+                    {
+                        case Condition.Zero:
+                            Builder.AppendLine("pop rcx"); // Value
+                            Builder.AppendLine("cmp rcx,0");
+                            Builder.AppendLine("jz " + op);
+                            break;
+                        
+                        case Condition.NotZero:
+                            Builder.AppendLine("pop rcx"); // Value
+                            Builder.AppendLine("cmp rcx,0");
+                            Builder.AppendLine("jnz " + op);
+                            break;
+                        
+                        case Condition.Less:
+                            Builder.AppendLine("pop rcx"); // Value 2
+                            Builder.AppendLine("pop rdx"); // Value 1
+                            Builder.AppendLine("cmp rdx,rcx");
+                            // Shouldn't this be jl?
+                            Builder.AppendLine("jb " + op);
+                            break;
+                        
+                        case Condition.NotEqual:
+                            Builder.AppendLine("pop rcx"); // Value 2
+                            Builder.AppendLine("pop rdx"); // Value 1
+                            Builder.AppendLine("cmp rdx,rcx");
+                            Builder.AppendLine("jne " + op);
+                            break;
+                        
+                        case Condition.Equal:
+                            Builder.AppendLine("pop rcx"); // Value 2
+                            Builder.AppendLine("pop rdx"); // Value 1
+                            Builder.AppendLine("cmp rdx,rcx");
+                            Builder.AppendLine("je " + op);
+                            break;
+                        
+                        default:
+                            Builder.AppendLine("jmp " + op);
+                            break;
+                    }
                     break;
 
                 case Push:
-                {
-                    Builder.AppendLine("push " + (op is Register r ? $"qword [Register{r.Index}+{r.Value * 8}]" : op));
+                    switch (condition)
+                    {
+                        case Condition.Zero:
+                            Builder.AppendLine("xor rax,rax");
+                            Builder.AppendLine("pop rcx"); // Value 2
+                            Builder.AppendLine("pop rdx"); // Value 1
+                            Builder.AppendLine("cmp rdx,rcx");
+                            Builder.AppendLine("setz al");
+                            Builder.AppendLine("push rax");
+                            break;
+                        
+                        case Condition.NotZero:
+                            Builder.AppendLine("xor rax,rax");
+                            Builder.AppendLine("pop rcx"); // Value 2
+                            Builder.AppendLine("pop rdx"); // Value 1
+                            Builder.AppendLine("cmp rdx,rcx");
+                            Builder.AppendLine("setnz al");
+                            Builder.AppendLine("push rax");
+                            break;
+                        
+                        case Condition.Less:
+                            Builder.AppendLine("xor rax,rax");
+                            Builder.AppendLine("pop rcx"); // Value 2
+                            Builder.AppendLine("pop rdx"); // Value 1
+                            Builder.AppendLine("cmp rdx,rcx");
+                            Builder.AppendLine("setl al");
+                            Builder.AppendLine("push rax");
+                            break;
+                        
+                        case Condition.NotEqual:
+                            Builder.AppendLine("xor rax,rax");
+                            Builder.AppendLine("pop rcx"); // Value 2
+                            Builder.AppendLine("pop rdx"); // Value 1
+                            Builder.AppendLine("cmp rdx,rcx");
+                            Builder.AppendLine("setne al");
+                            Builder.AppendLine("push rax");
+                            break;
+                        
+                        case Condition.Equal:
+                            Builder.AppendLine("xor rax,rax");
+                            Builder.AppendLine("pop rcx"); // Value 2
+                            Builder.AppendLine("pop rdx"); // Value 1
+                            Builder.AppendLine("cmp rdx,rcx");
+                            Builder.AppendLine("sete al");
+                            Builder.AppendLine("push rax");
+                            break;
+                        
+                        default:
+                            Builder.AppendLine("push " + (op is Register r ? $"qword [Register{r.Index}+{r.Value * 8}]" : op));
+                            break;
+                    }
                     break;
-                }
 
                 case Pop:
                 {
@@ -200,28 +262,12 @@ public class Amd64Compiler : Compiler
 
                 case Mov:
                 {
-                    var dest = op as Register;
+                    if (op is not Register dest)
+                        throw new Exception("What the fuck are you trying to do? Mov to an immediate value????");
+
                     Builder.AppendLine($"mov qword [Register{dest.Index}+{dest.Value * 8}],{(src is Register r ? $"qword [Register{r.Index}+{r.Value * 8}]" : src)}");
                     break;
                 }
-
-                case Pushl:
-                    Builder.AppendLine("xor rax,rax");
-                    Builder.AppendLine("pop rcx"); // Value 2
-                    Builder.AppendLine("pop rdx"); // Value 1
-                    Builder.AppendLine("cmp rdx,rcx");
-                    Builder.AppendLine("setl al");
-                    Builder.AppendLine("push rax");
-                    break;
-
-                case Pushe:
-                    Builder.AppendLine("xor rax,rax");
-                    Builder.AppendLine("pop rcx"); // Value 2
-                    Builder.AppendLine("pop rdx"); // Value 1
-                    Builder.AppendLine("cmp rdx,rcx");
-                    Builder.AppendLine("sete al");
-                    Builder.AppendLine("push rax");
-                    break;
 
                 case Func:
                     calls++;

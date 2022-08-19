@@ -90,33 +90,33 @@ public class IRCompiler
                         
                         case Code.Brfalse_S:
                         case Code.Brfalse:
-                            Builder.Inst(Jz, BrLabelName(inst, method));
+                            Builder.Inst(Jmp, BrLabelName(inst, method), null, Condition.Zero);
                             break;
                         
                         case Code.Brtrue_S:
                         case Code.Brtrue:
-                            Builder.Inst(Jnz, BrLabelName(inst, method));
+                            Builder.Inst(Jmp, BrLabelName(inst, method), null, Condition.NotZero);
                             break;
                         
                         case Code.Blt_Un_S:
                         case Code.Blt_Un:
                         case Code.Blt_S:
                         case Code.Blt:
-                            Builder.Inst(Jb, BrLabelName(inst, method));
+                            Builder.Inst(Jmp, BrLabelName(inst, method), null, Condition.Less);
                             break;
                         
                         case Code.Bne_Un_S:
                         case Code.Bne_Un:
-                            Builder.Inst(Jne, BrLabelName(inst, method));
+                            Builder.Inst(Jmp, BrLabelName(inst, method), null, Condition.NotEqual);
                             break;
                         
                         case Code.Clt_Un:
                         case Code.Clt:
-                            Builder.Inst(Pushl);
+                            Builder.Inst(Push, null, null, Condition.Less);
                             break;
                         
                         case Code.Ceq:
-                            Builder.Inst(Pushe);
+                            Builder.Inst(Push, null, null, Condition.Equal);
                             break;
 
                         case Code.Stloc_0: Builder.Inst(Pop, new Register(0)); break;

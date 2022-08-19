@@ -11,9 +11,9 @@ public class Builder
         Instructions = new();
     }
 
-    public void Inst(OpCode opcode, object? operand1 = null, object? operand2 = null)
+    public void Inst(OpCode opcode, object? operand1 = null, object? operand2 = null, Condition? condition = null)
     {
-        Instructions.Add(new Instruction(opcode, operand1, operand2));
+        Instructions.Add(new Instruction(opcode, operand1, operand2, condition));
     }
 
     public override string ToString()

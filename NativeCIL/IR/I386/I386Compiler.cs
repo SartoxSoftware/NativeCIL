@@ -45,13 +45,10 @@ public class I386Compiler : Compiler
         }
 
         var calls = 0;
-        foreach (var (opCode, op, src) in IRCompiler.Builder.Instructions)
+        foreach (var (opCode, op, src, condition) in IRCompiler.Builder.Instructions)
         {
             switch (opCode)
             {
-                case Jmp:
-                    Builder.AppendLine("jmp " + op);
-                    break;
                 case Dup:
                     Builder.AppendLine("push dword [esp]");
                     break;
@@ -61,38 +58,103 @@ public class I386Compiler : Compiler
                 case Popd:
                     Builder.AppendLine("add esp,4");
                     break;
-
-                case Jz:
-                    Builder.AppendLine("pop ecx"); // Value
-                    Builder.AppendLine("cmp ecx,0");
-                    Builder.AppendLine("jz " + op);
-                    break;
-
-                case Jnz:
-                    Builder.AppendLine("pop ecx"); // Value
-                    Builder.AppendLine("cmp ecx,0");
-                    Builder.AppendLine("jnz " + op);
-                    break;
-
-                case Jb:
-                    Builder.AppendLine("pop ecx"); // Value 2
-                    Builder.AppendLine("pop edx"); // Value 1
-                    Builder.AppendLine("cmp edx,ecx");
-                    Builder.AppendLine("jb " + op);
-                    break;
-
-                case Jne:
-                    Builder.AppendLine("pop ecx"); // Value 2
-                    Builder.AppendLine("pop edx"); // Value 1
-                    Builder.AppendLine("cmp edx,ecx");
-                    Builder.AppendLine("jne " + op);
+                
+                case Jmp:
+                    switch (condition)
+                    {
+                        case Condition.Zero:
+                            Builder.AppendLine("pop ecx"); // Value
+                            Builder.AppendLine("cmp ecx,0");
+                            Builder.AppendLine("jz " + op);
+                            break;
+                        
+                        case Condition.NotZero:
+                            Builder.AppendLine("pop ecx"); // Value
+                            Builder.AppendLine("cmp ecx,0");
+                            Builder.AppendLine("jnz " + op);
+                            break;
+                        
+                        case Condition.Less:
+                            Builder.AppendLine("pop ecx"); // Value 2
+                            Builder.AppendLine("pop edx"); // Value 1
+                            Builder.AppendLine("cmp edx,ecx");
+                            // Shouldn't this be jl?
+                            Builder.AppendLine("jb " + op);
+                            break;
+                        
+                        case Condition.NotEqual:
+                            Builder.AppendLine("pop ecx"); // Value 2
+                            Builder.AppendLine("pop edx"); // Value 1
+                            Builder.AppendLine("cmp edx,ecx");
+                            Builder.AppendLine("jne " + op);
+                            break;
+                        
+                        case Condition.Equal:
+                            Builder.AppendLine("pop ecx"); // Value 2
+                            Builder.AppendLine("pop edx"); // Value 1
+                            Builder.AppendLine("cmp edx,ecx");
+                            Builder.AppendLine("je " + op);
+                            break;
+                        
+                        default:
+                            Builder.AppendLine("jmp " + op);
+                            break;
+                    }
                     break;
 
                 case Push:
-                {
-                    Builder.AppendLine("push " + (op is Register r ? $"dword [Register{r.Index}+{r.Value * 4}]" : op));
+                    switch (condition)
+                    {
+                        case Condition.Zero:
+                            Builder.AppendLine("xor eax,eax");
+                            Builder.AppendLine("pop ecx"); // Value 2
+                            Builder.AppendLine("pop edx"); // Value 1
+                            Builder.AppendLine("cmp edx,ecx");
+                            Builder.AppendLine("setz al");
+                            Builder.AppendLine("push eax");
+                            break;
+                        
+                        case Condition.NotZero:
+                            Builder.AppendLine("xor eax,eax");
+                            Builder.AppendLine("pop ecx"); // Value 2
+                            Builder.AppendLine("pop edx"); // Value 1
+                            Builder.AppendLine("cmp edx,ecx");
+                            Builder.AppendLine("setnz al");
+                            Builder.AppendLine("push eax");
+                            break;
+                        
+                        case Condition.Less:
+                            Builder.AppendLine("xor eax,eax");
+                            Builder.AppendLine("pop ecx"); // Value 2
+                            Builder.AppendLine("pop edx"); // Value 1
+                            Builder.AppendLine("cmp edx,ecx");
+                            Builder.AppendLine("setl al");
+                            Builder.AppendLine("push eax");
+                            break;
+                        
+                        case Condition.NotEqual:
+                            Builder.AppendLine("xor eax,eax");
+                            Builder.AppendLine("pop ecx"); // Value 2
+                            Builder.AppendLine("pop edx"); // Value 1
+                            Builder.AppendLine("cmp edx,ecx");
+                            Builder.AppendLine("setne al");
+                            Builder.AppendLine("push eax");
+                            break;
+                        
+                        case Condition.Equal:
+                            Builder.AppendLine("xor eax,eax");
+                            Builder.AppendLine("pop ecx"); // Value 2
+                            Builder.AppendLine("pop edx"); // Value 1
+                            Builder.AppendLine("cmp edx,ecx");
+                            Builder.AppendLine("sete al");
+                            Builder.AppendLine("push eax");
+                            break;
+                        
+                        default:
+                            Builder.AppendLine("push " + (op is Register r ? $"dword [Register{r.Index}+{r.Value * 4}]" : op));
+                            break;
+                    }
                     break;
-                }
 
                 case Pop:
                 {
@@ -105,28 +167,12 @@ public class I386Compiler : Compiler
 
                 case Mov:
                 {
-                    var dest = op as Register;
+                    if (op is not Register dest)
+                        throw new Exception("What the fuck are you trying to do? Mov to an immediate value????");
+
                     Builder.AppendLine($"mov dword [Register{dest.Index}+{dest.Value * 4}],{(src is Register r ? $"dword [Register{r.Index}+{r.Value * 4}]" : src)}");
                     break;
                 }
-
-                case Pushl:
-                    Builder.AppendLine("xor eax,eax");
-                    Builder.AppendLine("pop ecx"); // Value 2
-                    Builder.AppendLine("pop edx"); // Value 1
-                    Builder.AppendLine("cmp edx,ecx");
-                    Builder.AppendLine("setl al");
-                    Builder.AppendLine("push eax");
-                    break;
-
-                case Pushe:
-                    Builder.AppendLine("xor eax,eax");
-                    Builder.AppendLine("pop ecx"); // Value 2
-                    Builder.AppendLine("pop edx"); // Value 1
-                    Builder.AppendLine("cmp edx,ecx");
-                    Builder.AppendLine("sete al");
-                    Builder.AppendLine("push eax");
-                    break;
 
                 case Func:
                     calls++;
