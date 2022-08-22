@@ -454,6 +454,57 @@ public class Amd64Compiler : Compiler
                     Builder.AppendLine("mov rcx,qword [rdx]");
                     Builder.AppendLine("push rcx");
                     break;
+                
+                case Iostore8:
+                    Builder.AppendLine("pop rax"); // Value
+                    Builder.AppendLine("pop rdx"); // Port
+                    Builder.AppendLine("out dx,al");
+                    break;
+                
+                case Ioload8:
+                    Builder.AppendLine("xor rax,rax");
+                    Builder.AppendLine("pop rdx"); // Port
+                    Builder.AppendLine("in al,dx");
+                    Builder.AppendLine("push rax");
+                    break;
+                
+                case Iostore16:
+                    Builder.AppendLine("pop rax"); // Value
+                    Builder.AppendLine("pop rdx"); // Port
+                    Builder.AppendLine("out dx,ax");
+                    break;
+                
+                case Ioload16:
+                    Builder.AppendLine("xor rax,rax");
+                    Builder.AppendLine("pop rdx"); // Port
+                    Builder.AppendLine("in ax,dx");
+                    Builder.AppendLine("push rax");
+                    break;
+                
+                case Iostore32:
+                    Builder.AppendLine("pop rax"); // Value
+                    Builder.AppendLine("pop rdx"); // Port
+                    Builder.AppendLine("out dx,eax");
+                    break;
+                
+                case Ioload32:
+                    Builder.AppendLine("xor rax,rax");
+                    Builder.AppendLine("pop rdx"); // Port
+                    Builder.AppendLine("in eax,dx");
+                    Builder.AppendLine("push rax");
+                    break;
+                
+                case Iostore64:
+                    Builder.AppendLine("pop rax"); // Value
+                    Builder.AppendLine("pop rdx"); // Port
+                    Builder.AppendLine("out dx,rax");
+                    break;
+                
+                case Ioload64:
+                    Builder.AppendLine("pop rdx"); // Port
+                    Builder.AppendLine("in rax,dx");
+                    Builder.AppendLine("push rax");
+                    break;
             }
         }
 

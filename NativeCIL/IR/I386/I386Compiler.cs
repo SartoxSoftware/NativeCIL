@@ -347,8 +347,49 @@ public class I386Compiler : Compiler
                     Builder.AppendLine("push ecx");
                     break;
                 
+                case Iostore8:
+                    Builder.AppendLine("pop eax"); // Value
+                    Builder.AppendLine("pop edx"); // Port
+                    Builder.AppendLine("out dx,al");
+                    break;
+                
+                case Ioload8:
+                    Builder.AppendLine("xor eax,eax");
+                    Builder.AppendLine("pop edx"); // Port
+                    Builder.AppendLine("in al,dx");
+                    Builder.AppendLine("push eax");
+                    break;
+                
+                case Iostore16:
+                    Builder.AppendLine("pop eax"); // Value
+                    Builder.AppendLine("pop edx"); // Port
+                    Builder.AppendLine("out dx,ax");
+                    break;
+                
+                case Ioload16:
+                    Builder.AppendLine("xor eax,eax");
+                    Builder.AppendLine("pop edx"); // Port
+                    Builder.AppendLine("in ax,dx");
+                    Builder.AppendLine("push eax");
+                    break;
+                
+                case Iostore32:
+                    Builder.AppendLine("pop eax"); // Value
+                    Builder.AppendLine("pop edx"); // Port
+                    Builder.AppendLine("out dx,eax");
+                    break;
+                
+                case Ioload32:
+                    Builder.AppendLine("pop edx"); // Port
+                    Builder.AppendLine("in eax,dx");
+                    Builder.AppendLine("push eax");
+                    break;
+                
                 case Memstore64: throw new Exception("Memstore64 is not supported on 32-bit targets!");
-                case Memload64: throw new Exception("Memstore64 is not supported on 32-bit targets!");
+                case Memload64: throw new Exception("Memload64 is not supported on 32-bit targets!");
+
+                case Iostore64: throw new Exception("Iostore64 is not supported on 32-bit targets!");
+                case Ioload64: throw new Exception("Ioload64 is not supported on 32-bit targets!");
             }
         }
 

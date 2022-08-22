@@ -51,10 +51,54 @@ public class IRCompiler
         Builder.Inst(Call, GetSafeName(_module.EntryPoint.FullName));
 
         foreach (var type in _module.Types)
-        {
             foreach (var method in type.Methods)
             {
                 Builder.Inst(Func, GetSafeName(method.FullName));
+                
+                switch (method.Name)
+                {
+                    case "In8":
+                        Builder.Inst(Push, new Register(0, 1));
+                        Builder.Inst(Push, new Register(1, 1));
+                        Builder.Inst(Ioload8);
+                        continue;
+                    case "In16":
+                        Builder.Inst(Push, new Register(0, 1));
+                        Builder.Inst(Push, new Register(1, 1));
+                        Builder.Inst(Ioload16);
+                        continue;
+                    case "In32":
+                        Builder.Inst(Push, new Register(0, 1));
+                        Builder.Inst(Push, new Register(1, 1));
+                        Builder.Inst(Ioload32);
+                        continue;
+                    case "In64":
+                        Builder.Inst(Push, new Register(0, 1));
+                        Builder.Inst(Push, new Register(1, 1));
+                        Builder.Inst(Ioload64);
+                        continue;
+                    
+                    case "Out8":
+                        Builder.Inst(Push, new Register(0, 1));
+                        Builder.Inst(Push, new Register(1, 1));
+                        Builder.Inst(Iostore8);
+                        continue;
+                    case "Out16":
+                        Builder.Inst(Push, new Register(0, 1));
+                        Builder.Inst(Push, new Register(1, 1));
+                        Builder.Inst(Iostore16);
+                        continue;
+                    case "Out32":
+                        Builder.Inst(Push, new Register(0, 1));
+                        Builder.Inst(Push, new Register(1, 1));
+                        Builder.Inst(Iostore32);
+                        continue;
+                    case "Out64":
+                        Builder.Inst(Push, new Register(0, 1));
+                        Builder.Inst(Push, new Register(1, 1));
+                        Builder.Inst(Iostore64);
+                        continue;
+                }
                 
                 var branches = GetAllBranches(method).ToList();
                 foreach (var inst in method.Body.Instructions)
@@ -233,7 +277,7 @@ public class IRCompiler
                         default: Console.WriteLine("Unimplemented opcode: " + inst.OpCode); break;
                     }
                 }
-            }}
+            }
     }
     
     private static string BrLabelName(dnlib.DotNet.Emit.Instruction ins, MethodDef def, bool create = false) =>
