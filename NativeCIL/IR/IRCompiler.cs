@@ -191,24 +191,28 @@ public class IRCompiler
                             Builder.Inst(And, 0xFFFFFFFFFFFFFFF);
                             break;
 
-                        case Code.Stind_I1:
-                        case Code.Stind_I2:
-                        case Code.Stind_I4:
-                        case Code.Stind_I8:
-                            Builder.Inst(Memstore);
-                            break;
+                        case Code.Stind_I1: Builder.Inst(Memstore8); break;
+                        case Code.Stind_I2: Builder.Inst(Memstore16); break;
+                        case Code.Stind_I4: Builder.Inst(Memstore32); break;
+                        case Code.Stind_I8: Builder.Inst(Memstore64); break;
 
                         case Code.Ldind_I1:
                         case Code.Ldind_U1:
+                            Builder.Inst(Memload8);
+                            goto case Code.Conv_I4;
+
                         case Code.Ldind_I2:
                         case Code.Ldind_U2:
+                            Builder.Inst(Memload16);
+                            goto case Code.Conv_I4;
+                            
                         case Code.Ldind_I4:
                         case Code.Ldind_U4:
-                            Builder.Inst(Memload);
+                            Builder.Inst(Memload32);
                             goto case Code.Conv_I4;
 
                         case Code.Ldind_I8:
-                            Builder.Inst(Memload);
+                            Builder.Inst(Memload64);
                             goto case Code.Conv_I8;
                             
                         case Code.Ldsfld:

@@ -309,17 +309,46 @@ public class I386Compiler : Compiler
                     Builder.AppendLine("push edx");
                     break;
 
-                case Memstore:
+                case Memstore8:
+                    Builder.AppendLine("pop ecx"); // Value
+                    Builder.AppendLine("pop edx"); // Address
+                    Builder.AppendLine("mov byte [edx],cl");
+                    break;
+
+                case Memload8:
+                    Builder.AppendLine("xor ecx,ecx");
+                    Builder.AppendLine("pop edx"); // Address
+                    Builder.AppendLine("mov cl,byte [edx]");
+                    Builder.AppendLine("push ecx");
+                    break;
+
+                case Memstore16:
+                    Builder.AppendLine("pop ecx"); // Value
+                    Builder.AppendLine("pop edx"); // Address
+                    Builder.AppendLine("mov word [edx],cx");
+                    break;
+
+                case Memload16:
+                    Builder.AppendLine("xor ecx,ecx");
+                    Builder.AppendLine("pop edx"); // Address
+                    Builder.AppendLine("mov cx,word [edx]");
+                    Builder.AppendLine("push ecx");
+                    break;
+
+                case Memstore32:
                     Builder.AppendLine("pop ecx"); // Value
                     Builder.AppendLine("pop edx"); // Address
                     Builder.AppendLine("mov dword [edx],ecx");
                     break;
 
-                case Memload:
+                case Memload32:
                     Builder.AppendLine("pop edx"); // Address
                     Builder.AppendLine("mov ecx,dword [edx]");
                     Builder.AppendLine("push ecx");
                     break;
+                
+                case Memstore64: throw new Exception("Memstore64 is not supported on 32-bit targets!");
+                case Memload64: throw new Exception("Memstore64 is not supported on 32-bit targets!");
             }
         }
 

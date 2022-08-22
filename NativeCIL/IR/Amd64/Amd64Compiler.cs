@@ -404,13 +404,52 @@ public class Amd64Compiler : Compiler
                     Builder.AppendLine("push rdx");
                     break;
 
-                case Memstore:
+                case Memstore8:
+                    Builder.AppendLine("pop rcx"); // Value
+                    Builder.AppendLine("pop rdx"); // Address
+                    Builder.AppendLine("mov byte [rdx],cl");
+                    break;
+
+                case Memload8:
+                    Builder.AppendLine("xor rcx,rcx");
+                    Builder.AppendLine("pop rdx"); // Address
+                    Builder.AppendLine("mov cl,byte [rdx]");
+                    Builder.AppendLine("push rcx");
+                    break;
+
+                case Memstore16:
+                    Builder.AppendLine("pop rcx"); // Value
+                    Builder.AppendLine("pop rdx"); // Address
+                    Builder.AppendLine("mov word [rdx],cx");
+                    break;
+
+                case Memload16:
+                    Builder.AppendLine("xor rcx,rcx");
+                    Builder.AppendLine("pop rdx"); // Address
+                    Builder.AppendLine("mov cx,word [rdx]");
+                    Builder.AppendLine("push rcx");
+                    break;
+
+                case Memstore32:
+                    Builder.AppendLine("pop rcx"); // Value
+                    Builder.AppendLine("pop rdx"); // Address
+                    Builder.AppendLine("mov dword [rdx],ecx");
+                    break;
+
+                case Memload32:
+                    Builder.AppendLine("xor rcx,rcx");
+                    Builder.AppendLine("pop rdx"); // Address
+                    Builder.AppendLine("mov ecx,dword [rdx]");
+                    Builder.AppendLine("push rcx");
+                    break;
+
+                case Memstore64:
                     Builder.AppendLine("pop rcx"); // Value
                     Builder.AppendLine("pop rdx"); // Address
                     Builder.AppendLine("mov qword [rdx],rcx");
                     break;
 
-                case Memload:
+                case Memload64:
                     Builder.AppendLine("pop rdx"); // Address
                     Builder.AppendLine("mov rcx,qword [rdx]");
                     Builder.AppendLine("push rcx");
