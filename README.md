@@ -1,5 +1,6 @@
 # Introduction
-NativeCIL is, as its name suggests, a CIL to native x86 compiler. It's a [CS2ASM](https://github.com/nifanfa/CS2ASM) rewrite, which is meant to be faster and more efficient and stable.
+NativeCIL is a CIL bytecode to native code compiler, written in C#. It originated as a better rewrite of [CS2ASM](https://github.com/nifanfa/CS2ASM).
+Unlike most other compilers, especially [IL2CPU](https://github.com/CosmosOS/IL2CPU), NativeCIL implements its own IR which will allow for IR optimizations and also having the bytecode compiled to other architectures as well, with not much effort.
 
 # Dependencies
 ## External
@@ -7,19 +8,18 @@ NativeCIL is, as its name suggests, a CIL to native x86 compiler. It's a [CS2ASM
 
 ## .NET
 - DiscUtils (for making the bootable image)
-- dnlib (for reading the CIL instructions)
+- dnlib (for reading the CIL bytecode instructions)
 
 # Usage
 ``NativeCIL --architecture <i386,amd64> --format <bin,elf> --image <none,iso> --output <output> <input>``
 
 ``NativeCIL -a<i386,amd64> -f<bin,elf> -t<none,iso> -o<output> <input>``
 
-For example:
+## Example
 
 ``./NativeCIL -aamd64 -felf -tiso -ooutput.iso TestProject.dll``
 
-You can now try to run on bare metal, or via QEMU:
+# Try it out!
+After you've compiled your program as a bootable image file, you may want to try it on bare metal now. If that isn't possible, you can try it out in a VM. Here's an example with QEMU:
 
-``qemu-system-x86_64 -cdrom output.iso -cpu max -m 1G -enable-kvm -serial stdio``
-
-**Be sure to remove the -enable-kvm argument if you're not on Linux!**
+``qemu-system-x86_64 -cdrom output.iso``
